@@ -17,6 +17,7 @@ import android.webkit.ValueCallback;
 import android.widget.Toast;
 import java.nio.charset.StandardCharsets;
 import java.io.OutputStream;
+import org.json.JSONObject;
 import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends Activity {
@@ -87,6 +88,17 @@ public class MainActivity extends Activity {
         try{startActivityForResult(i,REQ_SAVE_FILE);}catch(Exception e){Toast.makeText(ctx,"تعذر حفظ الملف",Toast.LENGTH_SHORT).show();}
       });
     }
+    /** Copies a private, read-only daily agenda snapshot to the native widget. */
+    @JavascriptInterface public void syncWidgetData(String snapshot){
+      if(snapshot==null || snapshot.length()>120000)return;
+      try{
+        JSONObject root=new JSONObject(snapshot);
+        if(root.optJSONArray("days")==null || root.optJSONArray("days").length()>14)return;
+        ctx.getSharedPreferences(BasWidgetProvider.DATA_PREFS,Context.MODE_PRIVATE)
+            .edit().putString(BasWidgetProvider.KEY_SNAPSHOT,snapshot).apply();
+        runOnUiThread(()->BasWidgetProvider.refresh(ctx));
+      }catch(Exception ignored){}
+    }
     @JavascriptInterface public void openWeb(String url){
       runOnUiThread(()->{try{openExternal(Uri.parse(url));}catch(Exception ignored){}});
     }
@@ -104,6 +116,11 @@ public class MainActivity extends Activity {
         }catch(Exception e){Toast.makeText(this,"تعذر إكمال الحفظ",Toast.LENGTH_LONG).show();}
       }pendingJSON=null;
     }
+  }
+  @Override protected void onResume(){
+    super.onResume();
+    if(web!=null)web.post(()->web.evaluateJavascript(
+      "if(typeof syncNativeWidget==='function')syncNativeWidget()",null));
   }
   @Override public void onBackPressed(){
     if(web!=null&&web.canGoBack())web.goBack();
