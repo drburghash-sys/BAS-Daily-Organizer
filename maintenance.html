@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<title>صيانة المنزل</title>
+<style>
+:root{--bg:#0b1220;--panel:#111c31;--panel2:#17243c;--line:#263653;--txt:#f8fafc;--muted:#9fb0c8;--accent:#f2b84b;--ok:#45b978;--danger:#e06464}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial;background:var(--bg);color:var(--txt)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{max-width:980px;margin:auto;padding:14px 14px 90px}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+h1{font-size:24px;margin:0}.sub{color:var(--muted);font-size:13px;line-height:1.6}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--txt);padding:11px 14px;border-radius:13px;font-weight:750}
+.btn.primary{background:var(--accent);color:#1d1606;border-color:transparent}.btn.ok{background:var(--ok);color:white;border-color:transparent}.btn.danger{background:#3b1e26;color:#ffd8de;border-color:#69323e}.btn.wa{background:#1f9d5b;color:white;border-color:transparent}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px}.stat b{font-size:22px;display:block;margin-top:3px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.service{background:linear-gradient(150deg,var(--panel),#13213a);border:1px solid var(--line);border-radius:19px;padding:16px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
+.service h2{margin:0 0 6px;font-size:20px}.note{white-space:pre-wrap;color:#dfe8f5;line-height:1.75}.meta{font-size:12px;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions .btn{flex:1;min-width:110px}
+.empty{padding:50px 10px;text-align:center;color:var(--muted)}.page{display:none}.page.active{display:block}
+.back{margin-bottom:12px}.detail{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:17px}.detail h2{font-size:25px;margin:0 0 10px}
+.lines{margin:14px 0;display:grid;gap:8px}.line{background:#0d1728;border:1px solid var(--line);border-radius:13px;padding:11px 13px}
+.form{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:15px;margin-top:12px}.fields{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}input,textarea,select{width:100%;background:#0c1525;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:11px}textarea{min-height:120px;resize:vertical}.full{grid-column:1/-1}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.toolbar .btn{flex:1}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#05070bd9;color:white;border:1px solid #ffffff22;padding:11px 16px;border-radius:13px;display:none;z-index:50}
+@media(max-width:700px){.grid,.fields,.stats{grid-template-columns:1fr}.service{min-height:auto}h1{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app">
+<section id="homePage" class="page active">
+  <div class="top"><div><h1>🏠 صيانة المنزل</h1><div class="sub">كل خدمة تفتح في صفحة مستقلة، ويمكن مشاركة أي قسم مباشرة.</div></div><button class="btn primary" onclick="newService()">＋ خدمة</button></div>
+  <div class="stats"><div class="stat">الخدمات<b id="serviceCount">0</b></div><div class="stat">المفتوحة<b id="openCount">0</b></div><div class="stat">المكتملة<b id="doneCount">0</b></div></div>
+  <div id="serviceGrid" class="grid"></div>
+  <div class="toolbar"><button class="btn" onclick="backup()">💾 نسخة احتياطية</button><label class="btn" style="text-align:center">↺ استعادة<input id="restoreFile" type="file" accept=".json,application/json" hidden></label></div>
+</section>
+
+<section id="detailPage" class="page">
+  <button class="btn back" onclick="goHome()">← العودة للخدمات</button>
+  <div id="detailCard" class="detail"></div>
+</section>
+
+<section id="editPage" class="page">
+  <button class="btn back" onclick="cancelEdit()">← رجوع</button>
+  <div class="form">
+    <h2 id="formTitle" style="margin-top:0">إضافة خدمة</h2>
+    <div class="fields">
+      <div><label>اسم الخدمة / القسم</label><input id="fTitle" placeholder="مثال: سباكة"></div>
+      <div><label>المسؤول</label><input id="fOwner" placeholder="أنا"></div>
+      <div><label>الحالة</label><select id="fStatus"><option value="new">جديد</option><option value="progress">قيد التنفيذ</option><option value="done">مكتمل</option></select></div>
+      <div><label>الموعد</label><input id="fDate" type="date"></div>
+      <div><label>التكلفة المتوقعة</label><input id="fExpected" type="number" min="0"></div>
+      <div><label>التكلفة الفعلية</label><input id="fActual" type="number" min="0"></div>
+      <div class="full"><label>الأعمال / التفاصيل — اكتب كل بند في سطر</label><textarea id="fNote"></textarea></div>
+    </div>
+    <div class="actions"><button class="btn primary" onclick="saveService()">حفظ</button><button class="btn" onclick="cancelEdit()">إلغاء</button></div>
+  </div>
+</section>
+</div>
+<div id="toast"></div>
+
+<script>
+const KEY='home_board_v1';
+const RESTORE_MARK='homeorg_v2_master_maintenance_20260916';
+const MASTER={"items":[],"people":["أنا"]};
+function clone(x){return JSON.parse(JSON.stringify(x))}
+function load(){
+  try{
+    if(localStorage.getItem(RESTORE_MARK)!=='1'){
+      const prev=localStorage.getItem(KEY);
+      if(prev) localStorage.setItem(KEY+'_pre_v2_'+Date.now(),prev);
+      localStorage.setItem(KEY,JSON.stringify(MASTER));
+      localStorage.setItem(RESTORE_MARK,'1');
+    }
+    const x=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(x&&Array.isArray(x.items)) return x;
+  }catch(e){}
+  return clone(MASTER);
+}
+let db=load();
+if(!Array.isArray(db.people))db.people=['أنا'];
+let currentId=null, editId=null;
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderHome()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function statusText(s){return s==='done'?'مكتمل':s==='progress'?'قيد التنفيذ':'جديد'}
+function show(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0)}
+function lines(note){return String(note||'').split(/\n+/).map(x=>x.trim()).filter(Boolean)}
+function serviceText(x){
+  let a=['🏠 صيانة المنزل','القسم: '+(x.title||'خدمة'),'الحالة: '+statusText(x.status)];
+  if(x.owner)a.push('المسؤول: '+x.owner);
+  if(x.date)a.push('الموعد: '+x.date);
+  if(Number(x.expected))a.push('التكلفة المتوقعة: '+x.expected+' ريال');
+  if(Number(x.actual))a.push('التكلفة الفعلية: '+x.actual+' ريال');
+  const ls=lines(x.note);
+  if(ls.length){a.push('');a.push('الأعمال:');ls.forEach(z=>a.push('• '+z))}
+  return a.join('\n');
+}
+async function shareWhatsApp(id){
+  const x=db.items.find(z=>z.id===id); if(!x)return;
+  const t=serviceText(x);
+  const url='https://wa.me/?text='+encodeURIComponent(t);
+  // داخل APK: افتح الرابط عبر Android خارج الـWebView حتى لا يحاول واتساب العمل داخل الإطار.
+  try{
+    if(window.Android && typeof Android.openWeb==='function'){
+      Android.openWeb(url);
+      return;
+    }
+  }catch(e){}
+  // خارج APK / في المتصفح العادي.
+  try{
+    if(navigator.share){await navigator.share({text:t});return}
+  }catch(e){if(e&&e.name==='AbortError')return}
+  try{window.open(url,'_blank')}
+  catch(e){
+    try{await navigator.clipboard.writeText(t);toast('تم نسخ النص للمشاركة')}
+    catch(_){prompt('انسخ النص:',t)}
+  }
+}
+function renderHome(){
+  const arr=db.items||[];
+  $('serviceCount').textContent=arr.length;
+  $('openCount').textContent=arr.filter(x=>x.status!=='done').length;
+  $('doneCount').textContent=arr.filter(x=>x.status==='done').length;
+  $('serviceGrid').innerHTML=arr.length?arr.map(x=>`<article class="service">
+    <div onclick="openService('${x.id}')" style="cursor:pointer"><h2>${esc(x.title||'خدمة')}</h2><div class="meta">${esc(statusText(x.status))}${x.owner?' · '+esc(x.owner):''}</div><div class="note" style="margin-top:10px">${esc(lines(x.note).slice(0,3).join('\n'))}</div></div>
+    <div class="actions"><button class="btn" onclick="openService('${x.id}')">فتح</button><button class="btn wa" onclick="shareWhatsApp('${x.id}')">واتساب</button></div>
+  </article>`).join(''):'<div class="empty">لا توجد خدمات مسجلة.</div>';
+}
+function openService(id){
+  const x=db.items.find(z=>z.id===id);if(!x)return;
+  currentId=id;
+  const ls=lines(x.note);
+  $('detailCard').innerHTML=`<h2>${esc(x.title||'خدمة')}</h2>
+    <div class="meta">الحالة: <b>${esc(statusText(x.status))}</b>${x.owner?' · المسؤول: '+esc(x.owner):''}${x.date?' · الموعد: '+esc(x.date):''}</div>
+    <div class="lines">${ls.length?ls.map(z=>`<div class="line">✓ ${esc(z)}</div>`).join(''):'<div class="empty">لا توجد تفاصيل.</div>'}</div>
+    ${(Number(x.expected)||Number(x.actual))?`<div class="meta">المتوقع: ${Number(x.expected)||0} ريال · الفعلي: ${Number(x.actual)||0} ريال</div>`:''}
+    <div class="actions"><button class="btn wa" onclick="shareWhatsApp('${x.id}')">مشاركة واتساب</button><button class="btn" onclick="editService('${x.id}')">تعديل</button><button class="btn ok" onclick="toggleDone('${x.id}')">${x.status==='done'?'إعادة فتح':'تم الإنجاز'}</button><button class="btn danger" onclick="deleteService('${x.id}')">حذف</button></div>`;
+  show('detailPage');
+}
+function goHome(){currentId=null;show('homePage');renderHome()}
+function newService(){
+  editId=null;
+  $('formTitle').textContent='إضافة خدمة';
+  $('fTitle').value='';$('fOwner').value='أنا';$('fStatus').value='new';$('fDate').value='';$('fExpected').value='';$('fActual').value='';$('fNote').value='';
+  show('editPage');
+}
+function editService(id){
+  const x=db.items.find(z=>z.id===id);if(!x)return;
+  editId=id;
+  $('formTitle').textContent='تعديل الخدمة';
+  $('fTitle').value=x.title||'';$('fOwner').value=x.owner||'';$('fStatus').value=x.status||'new';$('fDate').value=x.date||'';$('fExpected').value=x.expected||0;$('fActual').value=x.actual||0;$('fNote').value=x.note||'';
+  show('editPage');
+}
+function cancelEdit(){if(editId)openService(editId);else goHome()}
+function saveService(){
+  const title=$('fTitle').value.trim();if(!title)return alert('اكتب اسم الخدمة');
+  const obj={id:editId||String(Date.now())+Math.random(),title,type:'maintenance',status:$('fStatus').value,owner:$('fOwner').value.trim()||'أنا',date:$('fDate').value,expected:Number($('fExpected').value)||0,actual:Number($('fActual').value)||0,note:$('fNote').value.trim()};
+  const i=db.items.findIndex(x=>x.id===obj.id);
+  if(i>=0)db.items[i]=obj;else db.items.unshift(obj);
+  save();editId=null;openService(obj.id);toast('تم الحفظ');
+}
+function toggleDone(id){const x=db.items.find(z=>z.id===id);if(!x)return;x.status=x.status==='done'?'new':'done';save();openService(id)}
+function deleteService(id){if(!confirm('حذف هذه الخدمة؟'))return;db.items=db.items.filter(x=>x.id!==id);save();goHome()}
+function backup(){
+  const text=JSON.stringify(db,null,2),name='Home_Maintenance_Backup_'+new Date().toISOString().slice(0,10)+'.json';
+  if(window.Android&&typeof Android.saveText==='function'){Android.saveText(name,text);return}
+  const b=new Blob([text],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$('restoreFile').onchange=async()=>{
+  const f=$('restoreFile').files[0];if(!f)return;
+  try{
+    const x=JSON.parse(await f.text());
+    if(!x||!Array.isArray(x.items))throw 0;
+    if(confirm('استبدال بيانات الصيانة الحالية؟')){db=x;save();goHome();toast('تمت الاستعادة')}
+  }catch(e){alert('ملف غير صالح')}
+  finally{$('restoreFile').value=''}
+};
+function toast(t){$('toast').textContent=t;$('toast').style.display='block';setTimeout(()=>{$('toast').style.display='none'},1800)}
+renderHome();
+</script>
+</body>
+</html>
