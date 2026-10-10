@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<!-- Embedded personal snapshot removed; user imports own backup. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BMS Documents Hub V2</title>
+<style>
+:root{
+  --bg:#f4f7fb;--card:#fff;--ink:#182230;--muted:#667085;--line:#e4e7ec;
+  --pri:#2357d8;--pri2:#173b92;--danger:#b42318;--ok:#067647;--warn:#b54708;--teal:#0f766e
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#101828,#1d2939);color:white;padding:13px 14px}
+header h1{margin:0;font-size:19px}.sub{font-size:12px;color:#d0d5dd;margin-top:4px}
+nav{display:flex;gap:7px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{white-space:nowrap;background:#344054;color:#fff;border:0;border-radius:999px;padding:8px 12px}
+nav button.active{background:#fff;color:#101828;font-weight:700}
+main{max-width:1050px;margin:auto;padding:14px 14px 90px}
+.screen{display:none}.screen.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 4px 14px #1018280b}
+h2,h3{margin-top:0}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+label{display:block;font-size:12px;color:var(--muted);margin:5px 0}
+input,select,textarea{width:100%;padding:10px;border:1px solid #d0d5dd;border-radius:10px;background:white;font:inherit;color:var(--ink)}
+textarea{min-height:82px;resize:vertical}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{border:0;border-radius:10px;padding:9px 12px;cursor:pointer;font:inherit}
+.primary{background:var(--pri);color:white}.secondary{background:#eaecf0}.success{background:var(--ok);color:#fff}.teal{background:var(--teal);color:#fff}.danger{background:#fee4e2;color:var(--danger)}.warnbtn{background:#fffaeb;color:var(--warn)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.stat{background:white;border:1px solid var(--line);border-radius:14px;padding:13px}.stat b{font-size:24px;display:block}
+.list{display:grid;gap:9px}.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}.item-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.item h3{margin:0 0 5px}
+.meta{font-size:12px;color:var(--muted);line-height:1.8}.small{font-size:12px;color:var(--muted);line-height:1.7}
+.badge{display:inline-block;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:bold}
+.ok{background:#ecfdf3;color:var(--ok)}.warn{background:#fffaeb;color:var(--warn)}.bad{background:#fef3f2;color:var(--danger)}.neutral{background:#f2f4f7;color:#475467}.blue{background:#eff8ff;color:#175cd3}
+.empty{text-align:center;color:var(--muted);padding:28px}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+.filebox{border:1px dashed #98a2b3;border-radius:12px;padding:10px}.filepreview{max-width:100%;max-height:220px;margin-top:8px;border-radius:8px}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+@media(max-width:720px){.grid2,.grid3,.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}}
+</style>
+</head>
+<body>
+<header>
+  <h1>📁 BMS Documents Hub</h1>
+  <div class="sub">المستندات • السيارات • الشرائح والأرقام • الاشتراكات</div>
+  <nav>
+    <button class="active" data-s="home">الرئيسية</button>
+    <button data-s="docs">المستندات</button>
+    <button data-s="vehicles">السيارات</button>
+    <button data-s="sims">الشرائح والأرقام</button>
+    <button data-s="subs">الاشتراكات</button>
+    <button data-s="people">الأشخاص</button>
+    <button data-s="cats">التصنيفات</button>
+    <button data-s="backup">النسخ الاحتياطي</button>
+  </nav>
+</header>
+
+<main>
+
+<section id="home" class="screen active">
+  <div class="stats">
+    <div class="stat"><span>مستندات تحتاج انتباه</span><b id="homeDocsAlert">0</b></div>
+    <div class="stat"><span>وثائق سيارات قريبة/منتهية</span><b id="homeVehAlert">0</b></div>
+    <div class="stat"><span>اشتراكات تحتاج انتباهًا</span><b id="homeSubAlert">0</b></div>
+    <div class="stat"><span>أرقام وشرائح</span><b id="homeSimCount">0</b></div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="section-title"><h2 style="margin:0">⚠️ يحتاج انتباهك</h2><button class="secondary" onclick="importLegacyData()">استيراد من التطبيقات القديمة</button></div>
+    <div id="homeAttention" class="list"></div>
+  </div>
+
+  <div class="card">
+    <h2>الوحدات المدمجة</h2>
+    <div class="grid2">
+      <button class="primary" onclick="show('docs')">📄 المستندات العامة</button>
+      <button class="primary" onclick="show('vehicles')">🚗 وثائق السيارات</button>
+      <button class="teal" onclick="show('sims')">📱 الشرائح والأرقام</button>
+      <button class="success" onclick="show('subs')">💳 الاشتراكات</button>
+    </div>
+  </div>
+</section>
+
+<section id="docs" class="screen">
+  <div class="card">
+    <div class="section-title"><h2 id="docFormTitle" style="margin:0">إضافة مستند</h2><button class="secondary" onclick="resetDocForm()">جديد</button></div>
+    <input type="hidden" id="docEditId">
+    <div class="grid2">
+      <div><label>اسم المستند *</label><input id="docName" placeholder="جواز سفر، تأمين، صك..."></div>
+      <div><label>صاحب المستند</label><select id="docOwner"></select></div>
+      <div><label>التصنيف</label><select id="docCategory"></select></div>
+      <div><label>رقم المستند</label><input id="docNo"></div>
+      <div><label>تاريخ الإصدار</label><input id="docIssueDate" type="date"></div>
+      <div><label>هل له تاريخ انتهاء؟</label><select id="docHasExpiry"><option value="yes">نعم</option><option value="no">لا — دائم</option></select></div>
+      <div id="docExpiryWrap"><label>تاريخ الانتهاء</label><input id="docExpiryDate" type="date"></div>
+      <div><label>التنبيه قبل الانتهاء</label><select id="docWarnDays"><option>30</option><option selected>60</option><option>90</option><option>180</option></select></div>
+    </div>
+    <label>مكان الأصل / مكان الحفظ</label><input id="docLocation" placeholder="درج المكتب، ملف المنزل...">
+    <label>ملاحظات</label><textarea id="docNotes"></textarea>
+    <div class="filebox"><label>صورة أو PDF</label><input id="docFileInput" type="file" accept="image/*,.pdf"><div id="docFileInfo" class="small"></div><img id="docImgPreview" class="filepreview"></div>
+    <div class="actions"><button class="primary" onclick="saveDocument()">حفظ المستند</button><button class="secondary" onclick="resetDocForm()">مسح</button></div>
+  </div>
+
+  <div class="card">
+    <div class="grid3">
+      <div><label>بحث</label><input id="docSearch" placeholder="اسم، شخص، رقم..."></div>
+      <div><label>التصنيف</label><select id="docFilterCat"></select></div>
+      <div><label>الحالة</label><select id="docFilterStatus"><option value="">الكل</option><option value="bad">منتهي</option><option value="warn">قريب الانتهاء</option><option value="ok">ساري</option><option value="neutral">بدون انتهاء</option></select></div>
+    </div>
+  </div>
+  <div id="docList" class="list"></div>
+</section>
+
+<section id="vehicles" class="screen">
+  <div class="card">
+    <div class="stats">
+      <div class="stat"><span>عدد السيارات</span><b id="vehicleCount">0</b></div>
+      <div class="stat"><span>خلال 60 يومًا</span><b id="vehicleDueSoon">0</b></div>
+      <div class="stat"><span>منتهي</span><b id="vehicleExpired">0</b></div>
+      <div class="stat"><span>كل الوثائق</span><b id="vehicleDocCount">0</b></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 id="vehicleFormTitle">إضافة سيارة</h2><input id="vehicleEditId" type="hidden">
+    <div class="grid2">
+      <div><label>اسم السيارة *</label><input id="carName" placeholder="مثال: بايك"></div>
+      <div><label>الموديل أو الملاحظات</label><input id="carNote"></div>
+      <div><label>انتهاء التأمين</label><input id="insuranceDate" type="date"></div>
+      <div><label>انتهاء الفحص الدوري</label><input id="inspectionDate" type="date"></div>
+      <div><label>انتهاء الاستمارة</label><input id="registrationDate" type="date"></div>
+    </div>
+    <div class="actions"><button class="primary" onclick="saveVehicle()">حفظ السيارة</button><button class="secondary" onclick="resetVehicleForm()">مسح</button></div>
+  </div>
+  <div id="vehicleList" class="list"></div>
+</section>
+
+<section id="sims" class="screen">
+  <div class="card">
+    <div class="stats">
+      <div class="stat"><span>الإجمالي</span><b id="simTotal">0</b></div>
+      <div class="stat"><span>أرقام اتصال</span><b id="simPhoneCount">0</b></div>
+      <div class="stat"><span>شرائح بيانات</span><b id="simDataCount">0</b></div>
+      <div class="stat"><span>أجهزة مسجلة</span><b id="simDeviceCount">0</b></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 id="simFormTitle">إضافة شريحة أو رقم</h2><input id="simEditId" type="hidden">
+    <div class="grid2">
+      <div><label>النوع</label><select id="simType"><option value="phone">رقم اتصال</option><option value="data">شريحة بيانات</option></select></div>
+      <div><label>شركة الاتصالات</label><input id="simProvider" placeholder="STC / موبايلي / زين"></div>
+      <div><label>الرقم أو رقم الخدمة</label><input id="simNumber"></div>
+      <div><label>الجهاز الموجود عليه</label><input id="simDevice"></div>
+      <div id="whatsappWrap"><label>الواتساب موجود على أي جهاز؟</label><input id="simWhatsappDevice"></div>
+      <div><label>اسم تعريفي</label><input id="simName" placeholder="الرقم الرئيسي، بيانات السيارة..."></div>
+    </div>
+    <label>ملاحظات</label><textarea id="simNotes"></textarea>
+    <div class="actions"><button class="teal" onclick="saveSim()">حفظ</button><button class="secondary" onclick="resetSimForm()">مسح</button></div>
+  </div>
+  <div class="card"><input id="simSearch" placeholder="ابحث بالرقم أو الجهاز أو الشركة أو الاسم"></div>
+  <div id="simList" class="list"></div>
+</section>
+
+<section id="subs" class="screen">
+  <div class="card">
+    <div class="stats">
+      <div class="stat"><span>إجمالي شهري</span><b id="subMonthly">0</b></div>
+      <div class="stat"><span>إجمالي سنوي فعلي</span><b id="subAnnual">0</b></div>
+      <div class="stat"><span>مستحقة أو خلال 30 يومًا</span><b id="subNext30">0</b></div>
+      <div class="stat"><span>عدد الاشتراكات</span><b id="subCount">0</b></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 id="subFormTitle">إضافة اشتراك</h2><input id="subEditId" type="hidden">
+    <div class="grid2">
+      <div><label>اسم الاشتراك *</label><input id="subName" placeholder="Netflix"></div>
+      <div><label>المبلغ *</label><input id="subAmount" type="number" step="0.01"></div>
+      <div><label>نوع الدفع</label><select id="subCycle"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select></div>
+      <div id="monthlyDayWrap"><label>يوم الدفع كل شهر</label><input id="subMonthlyDay" type="number" min="1" max="31"></div>
+      <div id="yearlyDateWrap" style="display:none"><label>تاريخ التجديد السنوي القادم</label><input id="subYearlyDate" type="date"></div>
+    </div>
+    <label>ملاحظات</label><textarea id="subNotes"></textarea>
+    <div class="actions"><button class="success" onclick="saveSub()">حفظ الاشتراك</button><button class="secondary" onclick="resetSubForm()">مسح</button></div>
+  </div>
+  <div class="card"><input id="subSearch" placeholder="ابحث باسم الاشتراك"></div>
+  <div id="subList" class="list"></div>
+</section>
+
+<section id="people" class="screen">
+  <div class="card"><h2>الأشخاص</h2><div class="row"><input id="newPerson" placeholder="اسم الشخص"><button class="primary" onclick="addPerson()">إضافة</button></div></div>
+  <div id="peopleList" class="list"></div>
+</section>
+
+<section id="cats" class="screen">
+  <div class="card"><h2>التصنيفات</h2><div class="row"><input id="newCat" placeholder="مثال: عقارات"><button class="primary" onclick="addCat()">إضافة</button></div></div>
+  <div id="catList" class="list"></div>
+</section>
+
+<section id="backup" class="screen">
+  <div class="card">
+    <h2>النسخ الاحتياطي</h2>
+    <p class="small">النسخة الاحتياطية تشمل الآن: المستندات، السيارات، الشرائح والأرقام، الاشتراكات، الأشخاص والتصنيفات في ملف واحد.</p>
+    <div class="actions">
+      <button class="primary" onclick="exportAll()">تصدير نسخة كاملة JSON</button>
+      <label class="secondary" style="padding:9px 12px;border-radius:10px;cursor:pointer">استيراد نسخة كاملة<input id="importAllInput" type="file" accept=".json" hidden></label>
+      <button class="secondary" onclick="importLegacyData()">استيراد من التطبيقات القديمة</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const KEY='bms_documents_hub_v2';
+const LEGACY={
+  docs:'bms_documents_v1',
+  vehicles:'vehicle_documents_manager_v1',
+  sims:'sim_line_manager_v1',
+  subs:'subscription_manager_v1'
+};
+const DEFAULT_VEHICLES=[];
+const DEFAULT_SUBS=[];
+
+let db={
+  docs:[],
+  people:['أنا'],
+  categories:['شخصية','العائلة','سيارات','منزل وعقارات','عمل','مالية','سفر'],
+  vehicles:[],
+  sims:[],
+  subs:[],
+  legacyImported:false
+};
+let pendingDocFile=null;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function today0(){const d=new Date();d.setHours(0,0,0,0);return d}
+function daysTo(date){if(!date)return null;const d=new Date(date+'T00:00:00');return Math.ceil((d-today0())/86400000)}
+function validDateStr(x){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(x||'')))return false;const d=new Date(x+'T00:00:00');return !Number.isNaN(d.getTime())&&dateStr(d)===x}
+function dateStr(d){if(!d||Number.isNaN(d.getTime()))return '';const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
+function addMonthsStr(x,n=1){if(!validDateStr(x))return '';const d=new Date(x+'T00:00:00'),day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return dateStr(d)}
+function addYearsStr(x,n=1){if(!validDateStr(x))return '';const d=new Date(x+'T00:00:00'),m=d.getMonth(),day=d.getDate();d.setDate(1);d.setFullYear(d.getFullYear()+n);d.setMonth(m);const last=new Date(d.getFullYear(),m+1,0).getDate();d.setDate(Math.min(day,last));return dateStr(d)}
+function fmt(n){return Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2})}
+
+function load(){
+  try{
+    const x=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(x) db={...db,...x};
+  }catch(e){}
+  db.docs=Array.isArray(db.docs)?db.docs:[];
+  db.people=Array.isArray(db.people)&&db.people.length?db.people:['أنا'];
+  db.categories=Array.isArray(db.categories)&&db.categories.length?db.categories:['شخصية','العائلة','سيارات','منزل وعقارات','عمل','مالية','سفر'];
+  db.vehicles=Array.isArray(db.vehicles)?db.vehicles:[];
+  db.sims=Array.isArray(db.sims)?db.sims:[];
+  db.subs=Array.isArray(db.subs)?db.subs:[];
+  if(!db.legacyImported) importLegacyData(true);
+  normalizeRenewalState();
+  save();renderAll();
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function show(id){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active',x.id===id));
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.s===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  renderAll();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.s));
+
+function readLegacy(key){
+  try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}
+}
+function mergeById(target, incoming){
+  const map=new Map((target||[]).map(x=>[x.id, x]));
+  (incoming||[]).forEach(x=>{if(x&&x.id&&!map.has(x.id))map.set(x.id,x)});
+  return [...map.values()];
+}
+function importLegacyData(silent=false){
+  let imported=0;
+  const oldDocs=readLegacy(LEGACY.docs);
+  if(oldDocs && Array.isArray(oldDocs.docs)){
+    const before=db.docs.length; db.docs=mergeById(db.docs,oldDocs.docs); imported+=db.docs.length-before;
+    if(Array.isArray(oldDocs.people)) oldDocs.people.forEach(x=>{if(x&&!db.people.includes(x))db.people.push(x)});
+    if(Array.isArray(oldDocs.categories)) oldDocs.categories.forEach(x=>{if(x&&!db.categories.includes(x))db.categories.push(x)});
+  }
+  const oldVeh=readLegacy(LEGACY.vehicles);
+  if(Array.isArray(oldVeh)){const before=db.vehicles.length;db.vehicles=mergeById(db.vehicles,oldVeh);imported+=db.vehicles.length-before}
+  const oldSims=readLegacy(LEGACY.sims);
+  if(Array.isArray(oldSims)){const before=db.sims.length;db.sims=mergeById(db.sims,oldSims);imported+=db.sims.length-before}
+  const oldSubs=readLegacy(LEGACY.subs);
+  if(Array.isArray(oldSubs)){const before=db.subs.length;db.subs=mergeById(db.subs,oldSubs);imported+=db.subs.length-before}
+
+  // If nothing exists yet, seed vehicle/subscription data from supplied legacy app defaults.
+  if(!db.vehicles.length) db.vehicles=JSON.parse(JSON.stringify(DEFAULT_VEHICLES));
+  if(!db.subs.length) db.subs=JSON.parse(JSON.stringify(DEFAULT_SUBS));
+
+  db.legacyImported=true; save();renderAll();
+  if(!silent) alert(imported?`تم استيراد ${imported} سجل جديد من التطبيقات القديمة.`:'تم الفحص. لا توجد سجلات جديدة للاستيراد.');
+}
+
+/* -------- Documents -------- */
+function docStatus(d){
+  if(!d.hasExpiry||!d.expiryDate)return['neutral','بدون انتهاء'];
+  const n=daysTo(d.expiryDate);
+  if(n<0)return['bad',`−${Math.abs(n)} يوم`];
+  if(n<=Number(d.warnDays||60))return['warn',n===0?'ينتهي اليوم':`متبقي ${n} يوم`];
+  return['ok',`ساري • ${n} يوم`];
+}
+function refreshDocSelects(){
+  docOwner.innerHTML='<option value="">بدون تحديد</option>'+db.people.map(x=>`<option>${esc(x)}</option>`).join('');
+  docCategory.innerHTML=db.categories.map(x=>`<option>${esc(x)}</option>`).join('');
+  docFilterCat.innerHTML='<option value="">كل التصنيفات</option>'+db.categories.map(x=>`<option>${esc(x)}</option>`).join('');
+}
+function docCard(d){
+  const [c,t]=docStatus(d);
+  return `<div class="item"><div class="item-top"><div><h3>${esc(d.name)}</h3><div class="meta">${esc(d.owner||'بدون صاحب')} • ${esc(d.category||'بدون تصنيف')}${d.number?' • رقم: '+esc(d.number):''}<br>${d.hasExpiry&&d.expiryDate?'الانتهاء: '+esc(d.expiryDate):'مستند دائم'}${d.location?'<br>المكان: '+esc(d.location):''}</div></div><span class="badge ${c}">${esc(t)}</span></div><div class="actions"><button class="secondary" onclick="editDoc('${d.id}')">تعديل</button>${d.hasExpiry?`<button class="primary" onclick="renewDoc('${d.id}')">تم التجديد</button>`:''}${d.fileData?`<button class="secondary" onclick="openDocFile('${d.id}')">فتح المرفق</button>`:''}<button class="danger" onclick="deleteDoc('${d.id}')">حذف</button></div></div>`;
+}
+function renderDocs(){
+  refreshDocSelects();
+  const q=(docSearch?.value||'').trim().toLowerCase(),fc=docFilterCat?.value||'',fs=docFilterStatus?.value||'';
+  const x=db.docs.filter(d=>(!q||[d.name,d.owner,d.number,d.notes].join(' ').toLowerCase().includes(q))&&(!fc||d.category===fc)&&(!fs||docStatus(d)[0]===fs))
+    .sort((a,b)=>(a.expiryDate||'9999').localeCompare(b.expiryDate||'9999'));
+  docList.innerHTML=x.length?x.map(docCard).join(''):'<div class="empty">لا توجد مستندات مطابقة.</div>';
+}
+docHasExpiry.onchange=()=>docExpiryWrap.style.display=docHasExpiry.value==='yes'?'block':'none';
+docFileInput.onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{pendingDocFile={name:f.name,type:f.type,data:r.result};docFileInfo.textContent=f.name;if(f.type.startsWith('image/'))docImgPreview.src=r.result;else docImgPreview.removeAttribute('src')};
+  r.readAsDataURL(f);
+};
+function resetDocForm(){
+  docEditId.value='';docName.value='';docNo.value='';docIssueDate.value='';docExpiryDate.value='';docLocation.value='';docNotes.value='';
+  docHasExpiry.value='yes';docWarnDays.value='60';pendingDocFile=null;docFileInput.value='';docFileInfo.textContent='';docImgPreview.removeAttribute('src');docExpiryWrap.style.display='block';docFormTitle.textContent='إضافة مستند';
+}
+function saveDocument(){
+  const name=docName.value.trim();if(!name)return alert('اكتب اسم المستند.');
+  const id=docEditId.value||('d'+Date.now()),old=db.docs.find(x=>x.id===id);
+  const d={id,name,owner:docOwner.value,category:docCategory.value,number:docNo.value.trim(),issueDate:docIssueDate.value,hasExpiry:docHasExpiry.value==='yes',expiryDate:docHasExpiry.value==='yes'?docExpiryDate.value:'',warnDays:Number(docWarnDays.value),location:docLocation.value.trim(),notes:docNotes.value.trim(),history:old?.history||[],fileData:pendingDocFile||old?.fileData||null};
+  if(old)db.docs=db.docs.map(x=>x.id===id?d:x);else db.docs.push(d);
+  save();resetDocForm();renderAll();
+}
+function editDoc(id){
+  const d=db.docs.find(x=>x.id===id);if(!d)return;show('docs');
+  docEditId.value=d.id;docName.value=d.name;docOwner.value=d.owner||'';docCategory.value=d.category||'';docNo.value=d.number||'';docIssueDate.value=d.issueDate||'';docHasExpiry.value=d.hasExpiry?'yes':'no';docExpiryDate.value=d.expiryDate||'';docWarnDays.value=d.warnDays||60;docLocation.value=d.location||'';docNotes.value=d.notes||'';pendingDocFile=null;docFileInfo.textContent=d.fileData?.name||'';if(d.fileData?.type?.startsWith('image/'))docImgPreview.src=d.fileData.data;else docImgPreview.removeAttribute('src');docExpiryWrap.style.display=d.hasExpiry?'block':'none';docFormTitle.textContent='تعديل المستند';window.scrollTo({top:0,behavior:'smooth'});
+}
+function renewDoc(id){const d=db.docs.find(x=>x.id===id);if(!d)return;const x=prompt(`تم التجديد. أدخل تاريخ الانتهاء الجديد بصيغة YYYY-MM-DD.\nالتاريخ الحالي: ${d.expiryDate||'غير محدد'}`,'');if(!x)return;if(!validDateStr(x))return alert('التاريخ غير صحيح. استخدم YYYY-MM-DD');d.history=d.history||[];if(d.expiryDate)d.history.push({oldExpiry:d.expiryDate,newExpiry:x,renewedAt:new Date().toISOString()});d.expiryDate=x;d.hasExpiry=true;save();renderAll()}
+function deleteDoc(id){if(confirm('حذف هذا المستند؟')){db.docs=db.docs.filter(x=>x.id!==id);save();renderAll()}}
+function openDocFile(id){const d=db.docs.find(x=>x.id===id);if(d?.fileData?.data)window.open(d.fileData.data,'_blank')}
+
+/* -------- Vehicles -------- */
+function vehStatus(date){
+  const n=daysTo(date);if(n===null)return['neutral','غير محدد'];if(n<0)return['bad',`−${Math.abs(n)} يوم`];if(n<=60)return['warn',n===0?'0 يوم — اليوم':`باقي ${n} يوم`];return['ok',`باقي ${n} يوم`];
+}
+function vehDoc(v,label,field){const date=v[field],st=vehStatus(date);return `<div class="item" style="padding:9px;margin-top:7px"><div class="item-top"><div><strong>${label}</strong><div class="meta">${date||'غير محدد'}</div></div><span class="badge ${st[0]}">${st[1]}</span></div><div class="actions"><button class="primary" onclick="renewVehicleDoc('${v.id}','${field}')">تم التجديد / ابدأ العد</button></div></div>`}
+function renewVehicleDoc(id,field){const v=db.vehicles.find(x=>x.id===id);if(!v)return;const labels={insurance:'التأمين',inspection:'الفحص الدوري',registration:'الاستمارة'};if(!labels[field])return;const old=v[field]||'';const x=prompt(`أدخل تاريخ الانتهاء الجديد لـ ${labels[field]} بصيغة YYYY-MM-DD.\nالتاريخ الحالي: ${old||'غير محدد'}`,'');if(!x)return;if(!validDateStr(x))return alert('التاريخ غير صحيح. استخدم YYYY-MM-DD');v.renewalHistory=v.renewalHistory||{};v.renewalHistory[field]=v.renewalHistory[field]||[];if(old)v.renewalHistory[field].push({oldExpiry:old,newExpiry:x,renewedAt:new Date().toISOString()});v[field]=x;save();renderAll()}
+function renderVehicles(){
+  const all=db.vehicles.flatMap(v=>[v.insurance,v.inspection,v.registration]);vehicleCount.textContent=db.vehicles.length;vehicleDueSoon.textContent=all.filter(d=>{const n=daysTo(d);return n!==null&&n>=0&&n<=60}).length;vehicleExpired.textContent=all.filter(d=>{const n=daysTo(d);return n!==null&&n<0}).length;vehicleDocCount.textContent=all.filter(Boolean).length;
+  const sorted=[...db.vehicles].sort((a,b)=>Math.min(...[a.insurance,a.inspection,a.registration].map(x=>daysTo(x)??999999))-Math.min(...[b.insurance,b.inspection,b.registration].map(x=>daysTo(x)??999999)));
+  vehicleList.innerHTML=sorted.length?sorted.map(v=>`<div class="item"><h3>🚗 ${esc(v.name)}</h3>${v.note?`<div class="meta">${esc(v.note)}</div>`:''}${vehDoc(v,'التأمين','insurance')}${vehDoc(v,'الفحص الدوري','inspection')}${vehDoc(v,'الاستمارة','registration')}<div class="actions"><button class="secondary" onclick="editVehicle('${v.id}')">تعديل</button><button class="danger" onclick="deleteVehicle('${v.id}')">حذف</button></div></div>`).join(''):'<div class="empty">لا توجد سيارات.</div>';
+}
+function resetVehicleForm(){vehicleEditId.value='';carName.value='';carNote.value='';insuranceDate.value='';inspectionDate.value='';registrationDate.value='';vehicleFormTitle.textContent='إضافة سيارة'}
+function saveVehicle(){
+  const name=carName.value.trim();if(!name)return alert('اكتب اسم السيارة');
+  const id=vehicleEditId.value||('v'+Date.now()),old=db.vehicles.find(x=>x.id===id);
+  const o={id,name,note:carNote.value.trim(),insurance:insuranceDate.value,inspection:inspectionDate.value,registration:registrationDate.value,renewalHistory:old?.renewalHistory||{}};
+  const i=db.vehicles.findIndex(x=>x.id===o.id);if(i>=0)db.vehicles[i]=o;else db.vehicles.push(o);save();resetVehicleForm();renderAll();
+}
+function editVehicle(id){const v=db.vehicles.find(x=>x.id===id);if(!v)return;show('vehicles');vehicleEditId.value=v.id;carName.value=v.name;carNote.value=v.note||'';insuranceDate.value=v.insurance||'';inspectionDate.value=v.inspection||'';registrationDate.value=v.registration||'';vehicleFormTitle.textContent='تعديل السيارة'}
+function deleteVehicle(id){if(confirm('حذف السيارة؟')){db.vehicles=db.vehicles.filter(x=>x.id!==id);save();renderAll()}}
+
+/* -------- SIMs -------- */
+simType.onchange=()=>{const data=simType.value==='data';whatsappWrap.style.display=data?'none':'block';if(data)simWhatsappDevice.value=''};
+function renderSims(){
+  simTotal.textContent=db.sims.length;simPhoneCount.textContent=db.sims.filter(x=>x.type==='phone').length;simDataCount.textContent=db.sims.filter(x=>x.type==='data').length;simDeviceCount.textContent=new Set(db.sims.map(x=>x.simDevice).filter(Boolean)).size;
+  const q=(simSearch?.value||'').trim().toLowerCase();
+  const arr=db.sims.filter(r=>!q||[r.name,r.number,r.provider,r.simDevice,r.whatsappDevice,r.notes].join(' ').toLowerCase().includes(q));
+  simList.innerHTML=arr.length?arr.map(r=>`<div class="item"><div class="item-top"><div><h3>${esc(r.name||r.number||(r.type==='data'?'شريحة بيانات':'رقم اتصال'))}</h3><span class="badge ${r.type==='phone'?'ok':'blue'}">${r.type==='phone'?'رقم اتصال':'شريحة بيانات'}</span>${r.provider?` <span class="badge neutral">${esc(r.provider)}</span>`:''}</div><strong>${esc(r.number||'')}</strong></div><div class="meta" style="margin-top:8px"><strong>الجهاز:</strong> ${esc(r.simDevice||'')}${r.type==='phone'?`<br><strong>الواتساب:</strong> ${esc(r.whatsappDevice||'غير محدد')}`:''}${r.notes?`<br><strong>ملاحظات:</strong> ${esc(r.notes)}`:''}</div><div class="actions"><button class="secondary" onclick="editSim('${r.id}')">تعديل</button><button class="danger" onclick="deleteSim('${r.id}')">حذف</button></div></div>`).join(''):'<div class="empty">لا توجد أرقام أو شرائح محفوظة.</div>';
+}
+function resetSimForm(){simEditId.value='';simType.value='phone';simProvider.value='';simNumber.value='';simDevice.value='';simWhatsappDevice.value='';simName.value='';simNotes.value='';simFormTitle.textContent='إضافة شريحة أو رقم';whatsappWrap.style.display='block'}
+function saveSim(){
+  const type=simType.value,device=simDevice.value.trim(),number=simNumber.value.trim();if(!device)return alert('اكتب الجهاز الموجود عليه الرقم أو الشريحة');if(type==='phone'&&!number)return alert('اكتب رقم الجوال');
+  const o={id:simEditId.value||('r'+Date.now()),type,provider:simProvider.value.trim(),number,simDevice:device,whatsappDevice:type==='phone'?simWhatsappDevice.value.trim():'',name:simName.value.trim(),notes:simNotes.value.trim()};
+  const i=db.sims.findIndex(x=>x.id===o.id);if(i>=0)db.sims[i]=o;else db.sims.unshift(o);save();resetSimForm();renderAll();
+}
+function editSim(id){const r=db.sims.find(x=>x.id===id);if(!r)return;show('sims');simEditId.value=r.id;simType.value=r.type;simProvider.value=r.provider||'';simNumber.value=r.number||'';simDevice.value=r.simDevice||'';simWhatsappDevice.value=r.whatsappDevice||'';simName.value=r.name||'';simNotes.value=r.notes||'';simFormTitle.textContent='تعديل البيانات';whatsappWrap.style.display=r.type==='data'?'none':'block'}
+function deleteSim(id){if(confirm('حذف هذا الرقم أو الشريحة؟')){db.sims=db.sims.filter(x=>x.id!==id);save();renderAll()}}
+
+/* -------- Subscriptions -------- */
+subCycle.onchange=()=>{const y=subCycle.value==='yearly';monthlyDayWrap.style.display=y?'none':'block';yearlyDateWrap.style.display=y?'block':'none'};
+function nextMonthlyDate(day){if(!day)return null;const now=new Date();const y=now.getFullYear(),m=now.getMonth();return new Date(y,m,Math.min(Number(day),new Date(y,m+1,0).getDate()))}
+function normalizeRenewalState(){db.subs.forEach(s=>{s.history=Array.isArray(s.history)?s.history:[];if(!s.nextDueDate){if(s.cycle==='monthly'&&s.monthlyDay){const d=nextMonthlyDate(s.monthlyDay);if(d)s.nextDueDate=dateStr(d)}else if(s.cycle==='yearly'&&s.yearlyDate)s.nextDueDate=s.yearlyDate}})}
+function nextSubDate(s){const x=s.nextDueDate||(s.cycle==='yearly'?s.yearlyDate:'');return x?new Date(x+'T00:00:00'):null}
+function daysUntilDate(d){if(!d)return null;return Math.ceil((d-today0())/86400000)}
+function subStatus(s){const n=daysUntilDate(nextSubDate(s));if(n===null)return['neutral','الموعد غير محدد'];if(n<0)return['bad',`−${Math.abs(n)} يوم`];if(n===0)return['warn','0 يوم — اليوم'];if(n<=30)return['warn',`بعد ${n} يوم`];return['ok',`بعد ${n} يوم`]}
+function renewSub(id){const s=db.subs.find(x=>x.id===id);if(!s)return;const cur=s.nextDueDate||(s.cycle==='yearly'?s.yearlyDate:'');let suggested='';if(cur)suggested=s.cycle==='monthly'?addMonthsStr(cur,1):addYearsStr(cur,1);if(!suggested&&s.cycle==='monthly'&&s.monthlyDay){const d=nextMonthlyDate(s.monthlyDay);if(d)suggested=addMonthsStr(dateStr(d),1)}const verb=s.cycle==='monthly'?'تم السداد':'تم التجديد';const x=prompt(`${verb}. أدخل تاريخ الاستحقاق القادم بصيغة YYYY-MM-DD.\nيمكنك قبول التاريخ المقترح أو تعديله.`,suggested);if(!x)return;if(!validDateStr(x))return alert('التاريخ غير صحيح. استخدم YYYY-MM-DD');s.history=Array.isArray(s.history)?s.history:[];if(cur)s.history.push({oldDue:cur,newDue:x,renewedAt:new Date().toISOString()});s.nextDueDate=x;if(s.cycle==='yearly')s.yearlyDate=x;save();renderAll()}
+function renderSubs(){
+  const monthly=db.subs.filter(s=>s.cycle==='monthly').reduce((a,s)=>a+Number(s.amount||0),0),annual=monthly*12+db.subs.filter(s=>s.cycle==='yearly').reduce((a,s)=>a+Number(s.amount||0),0),due30=db.subs.filter(s=>{const n=daysUntilDate(nextSubDate(s));return n!==null&&n<=30}).length;
+  subMonthly.textContent=fmt(monthly)+' ريال';subAnnual.textContent=fmt(annual)+' ريال';subNext30.textContent=due30;subCount.textContent=db.subs.length;
+  const q=(subSearch?.value||'').trim().toLowerCase(),arr=db.subs.filter(s=>s.name.toLowerCase().includes(q)).sort((a,b)=>(nextSubDate(a)||new Date(8640000000000000))-(nextSubDate(b)||new Date(8640000000000000)));
+  subList.innerHTML=arr.length?arr.map(s=>{const st=subStatus(s),due=s.nextDueDate||(s.cycle==='yearly'?s.yearlyDate:'');return `<div class="item"><div class="item-top"><div><h3>${esc(s.name)}</h3><div class="meta">${s.cycle==='monthly'?(s.monthlyDay?`شهري — يوم ${s.monthlyDay}`:'شهري — يوم غير محدد'):'سنوي'}${due?`<br>الاستحقاق القادم: ${due}`:''}</div></div><strong>${fmt(s.amount)} ريال</strong></div><div style="margin-top:8px"><span class="badge ${st[0]}">${st[1]}</span></div>${s.notes?`<div class="meta" style="margin-top:7px">${esc(s.notes)}</div>`:''}<div class="actions"><button class="primary" onclick="renewSub('${s.id}')">${s.cycle==='monthly'?'تم السداد / ابدأ العد':'تم التجديد / ابدأ العد'}</button><button class="secondary" onclick="editSub('${s.id}')">تعديل</button><button class="danger" onclick="deleteSub('${s.id}')">حذف</button></div></div>`}).join(''):'<div class="empty">لا توجد اشتراكات.</div>';
+}
+function resetSubForm(){subEditId.value='';subName.value='';subAmount.value='';subCycle.value='monthly';subMonthlyDay.value='';subYearlyDate.value='';subNotes.value='';subFormTitle.textContent='إضافة اشتراك';monthlyDayWrap.style.display='block';yearlyDateWrap.style.display='none'}
+function saveSub(){
+  const n=subName.value.trim(),a=Number(subAmount.value);if(!n||!a)return alert('أدخل اسم الاشتراك والمبلغ');const c=subCycle.value;if(c==='monthly'&&subMonthlyDay.value&&(Number(subMonthlyDay.value)<1||Number(subMonthlyDay.value)>31))return alert('يوم الدفع يجب أن يكون من 1 إلى 31');if(c==='yearly'&&!subYearlyDate.value)return alert('حدد تاريخ التجديد السنوي');
+  const id=subEditId.value||('s'+Date.now()),old=db.subs.find(x=>x.id===id),monthlyDay=c==='monthly'?(subMonthlyDay.value?Number(subMonthlyDay.value):''):'';
+  let nextDueDate='';if(c==='yearly')nextDueDate=subYearlyDate.value;else if(monthlyDay){if(old&&old.cycle==='monthly'&&Number(old.monthlyDay)===Number(monthlyDay)&&old.nextDueDate)nextDueDate=old.nextDueDate;else{const d=nextMonthlyDate(monthlyDay);if(d)nextDueDate=dateStr(d)}}
+  const o={id,name:n,amount:a,cycle:c,monthlyDay,yearlyDate:c==='yearly'?subYearlyDate.value:'',nextDueDate,notes:subNotes.value.trim(),history:old?.history||[]};
+  const i=db.subs.findIndex(x=>x.id===o.id);if(i>=0)db.subs[i]=o;else db.subs.push(o);save();resetSubForm();renderAll();
+}
+function editSub(id){const s=db.subs.find(x=>x.id===id);if(!s)return;show('subs');subEditId.value=s.id;subName.value=s.name;subAmount.value=s.amount;subCycle.value=s.cycle;subMonthlyDay.value=s.monthlyDay||'';subYearlyDate.value=s.yearlyDate||'';subNotes.value=s.notes||'';subFormTitle.textContent='تعديل الاشتراك';subCycle.onchange()}
+function deleteSub(id){if(confirm('حذف الاشتراك؟')){db.subs=db.subs.filter(x=>x.id!==id);save();renderAll()}}
+
+/* -------- People / categories -------- */
+function addPerson(){const x=newPerson.value.trim();if(x&&!db.people.includes(x)){db.people.push(x);newPerson.value='';save();renderAll()}}
+function addCat(){const x=newCat.value.trim();if(x&&!db.categories.includes(x)){db.categories.push(x);newCat.value='';save();renderAll()}}
+function removePerson(x){x=decodeURIComponent(x);if(db.docs.some(d=>d.owner===x))return alert('يوجد مستند مرتبط بهذا الشخص.');db.people=db.people.filter(v=>v!==x);save();renderAll()}
+function removeCat(x){x=decodeURIComponent(x);if(db.docs.some(d=>d.category===x))return alert('يوجد مستند داخل هذا التصنيف.');db.categories=db.categories.filter(v=>v!==x);save();renderAll()}
+function renderPeople(){peopleList.innerHTML=db.people.map(x=>`<div class="item"><div class="item-top"><b>${esc(x)}</b><button class="danger" onclick="removePerson('${encodeURIComponent(x)}')">حذف</button></div></div>`).join('')}
+function renderCats(){catList.innerHTML=db.categories.map(x=>`<div class="item"><div class="item-top"><b>${esc(x)}</b><button class="danger" onclick="removeCat('${encodeURIComponent(x)}')">حذف</button></div></div>`).join('')}
+
+/* -------- Home -------- */
+function renderHome(){
+  const docAlerts=db.docs.filter(d=>['bad','warn'].includes(docStatus(d)[0]));
+  const vehAlerts=[];
+  db.vehicles.forEach(v=>[['التأمين',v.insurance],['الفحص',v.inspection],['الاستمارة',v.registration]].forEach(([label,date])=>{const st=vehStatus(date);if(['bad','warn'].includes(st[0]))vehAlerts.push({v,label,date,st})}));
+  const subAlerts=db.subs.filter(s=>{const n=daysUntilDate(nextSubDate(s));return n!==null&&n<=30});
+  homeDocsAlert.textContent=docAlerts.length;homeVehAlert.textContent=vehAlerts.length;homeSubAlert.textContent=subAlerts.length;homeSimCount.textContent=db.sims.length;
+
+  let chunks=[];
+  docAlerts.slice(0,5).forEach(d=>chunks.push(`<div class="item"><div class="item-top"><div><strong>📄 ${esc(d.name)}</strong><div class="meta">${esc(d.owner||'')} • ${esc(d.expiryDate||'')}</div></div><span class="badge ${docStatus(d)[0]}">${docStatus(d)[1]}</span></div></div>`));
+  vehAlerts.slice(0,5).forEach(x=>chunks.push(`<div class="item"><div class="item-top"><div><strong>🚗 ${esc(x.v.name)} — ${x.label}</strong><div class="meta">${esc(x.date||'')}</div></div><span class="badge ${x.st[0]}">${x.st[1]}</span></div></div>`));
+  subAlerts.slice(0,5).forEach(s=>{const st=subStatus(s);chunks.push(`<div class="item"><div class="item-top"><div><strong>💳 ${esc(s.name)}</strong><div class="meta">${s.cycle==='monthly'?'دفعة شهرية':'تجديد سنوي'}</div></div><span class="badge ${st[0]}">${st[1]}</span></div></div>`)});
+  homeAttention.innerHTML=chunks.length?chunks.join(''):'<div class="empty">لا توجد عناصر تحتاج انتباهًا حاليًا.</div>';
+}
+
+/* -------- Backup -------- */
+function exportAll(){
+  save();const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='BMS_Documents_Hub_Backup.json';a.click();URL.revokeObjectURL(a.href);
+}
+importAllInput.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x||!Array.isArray(x.docs)||!Array.isArray(x.vehicles)||!Array.isArray(x.sims)||!Array.isArray(x.subs))throw 0;db=x;normalizeRenewalState();save();renderAll();alert('تم استيراد النسخة الكاملة.')}catch(e){alert('ملف النسخة غير صالح.')}};r.readAsText(f)}
+
+/* -------- Events / master render -------- */
+docSearch.oninput=renderDocs;docFilterCat.onchange=renderDocs;docFilterStatus.onchange=renderDocs;
+simSearch.oninput=renderSims;subSearch.oninput=renderSubs;
+function renderAll(){renderDocs();renderVehicles();renderSims();renderSubs();renderPeople();renderCats();renderHome()}
+load();
+</script>
+
+<script>
+(function(){
+ const nativeSave=(name,text)=>{try{if(window.Android&&typeof Android.saveText==='function'){Android.saveText(name,text);return true}}catch(e){}return false};
+ const oldExport=window.exportAll;
+ window.exportAll=function(){try{save(); const text=JSON.stringify(db,null,2); if(nativeSave('BMS_Documents_Hub_Backup.json',text))return;}catch(e){} if(typeof oldExport==='function') return oldExport();};
+})();
+</script>
+</body>
+</html>
