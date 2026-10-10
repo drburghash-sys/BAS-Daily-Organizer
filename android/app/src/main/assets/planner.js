@@ -99,7 +99,32 @@ function renderToday(){let plan=dailyPlan(),day=weekday(selected),p=state.prayer
 function renderWeek(){let anchor=fromISO(selected),first=addDays(selected,-((anchor.getDay()+7)%7));$('weeklyCards').innerHTML=Array.from({length:7},(_,i)=>{let dt=addDays(first,i),extras=DAILY_EXTRAS[weekday(dt)],plan=dailyPlan(dt);let valid=plan.events.filter(x=>x.check);let done=valid.filter(e=>isDone(dt,e)).length;return `<button class="daycard ${dt===selected?'active':''}" onclick="setSelectedDate('${dt}');navigate('today')"><b>${DAYNAMES[weekday(dt)]}</b><small>${new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'short'}).format(fromISO(dt))}</small><div class="activity">${ehtml(extras[0][0])}</div><small>${isOncall(dt)?'🩺 مناوبة · ':' '}${fmtNum(done)} / ${fmtNum(valid.length)} منجز</small></button>`}).join('')}
 function fillSettings(){const s=state.settings;for(const id of ['workStart','workEnd','bedtime'])$(id).value=s[id];for(const [id,key] of [['quranMinutes','quranMinutes'],['girlMinutes','girlMinutes'],['restMinutes','restMinutes']])$(id).value=s[key];$('cityName').value=s.city;$('countryCode').value=s.country;renderPrayerEditor()}
 function renderPrayerEditor(){const p=state.prayers[selected]?.times||{};$('prayerEditor').innerHTML=PRAYERS.map(([key,label])=>`<div><label>${label}</label><input type="time" id="pr-${key}" value="${ehtml(p[key]||'')}" class="wide"></div>`).join('');$('prayerStatus').textContent='الموعد الجاري تعديله: '+dateText(selected)}
-function renderAll(){renderToday();renderWeek();if(activeView==='settings')renderPrayerEditor()}
+/** Send the real, current agenda to Android widget storage. PWA remains standalone. */
+function syncNativeWidget(){
+ const bridge=window.Android;
+ if(!bridge||typeof bridge.syncWidgetData!=='function')return;
+ try{
+  const dates=Array.from({length:8},(_,i)=>addDays(localISO(),i));
+  const days=dates.map(date=>{
+   const plan=dailyPlan(date);
+   const checkable=plan.events.filter(e=>e.check);
+   return {
+    date,
+    label:new Intl.DateTimeFormat('ar-SA',{weekday:'long',day:'numeric',month:'short'}).format(fromISO(date)),
+    done:checkable.filter(e=>isDone(date,e)).length,
+    total:checkable.length,
+    items:checkable.map(e=>({
+      time:clock(e.start),
+      title:String(e.title||'نشاط'),
+      done:isDone(date,e),
+      prayer:e.kind==='prayer'
+    }))
+   };
+  });
+  bridge.syncWidgetData(JSON.stringify({schema:1,days}));
+ }catch(err){console.warn('Widget sync unavailable',err)}
+}
+function renderAll(){renderToday();renderWeek();if(activeView==='settings')renderPrayerEditor();syncNativeWidget()}
 function navigate(page,push=true){if(push&&location.hash.slice(1)!==page)history.pushState({page},'', '#'+page);activeView=page;const isModule=['memo','home','car','docs'].includes(page);document.querySelectorAll('.view').forEach(el=>el.classList.toggle('visible',el.id==='view-'+(isModule?'module':page)));document.querySelectorAll('.tab').forEach(el=>{el.classList.toggle('active',el.dataset.nav===page)});for(const v of ['memo','home','car','docs'])$('module-'+v).classList.toggle('visible',page===v);
  if(isModule)$('moduleTitle').textContent={memo:'مفكرتي',home:'صيانة المنزل',car:'صيانة السيارات',docs:'مستنداتي ووثائقي'}[page];if(page==='settings')fillSettings();if(page==='week')renderWeek();if(page==='today')renderToday();window.scrollTo(0,0)}
 function setSelectedDate(v){if(!/^\d{4}-\d\d-\d\d$/.test(v))return;selected=v;renderAll();if(!state.prayers[selected])fetchPrayers(false)}
@@ -137,7 +162,7 @@ async function restoreFile(event){const f=event.target.files?.[0];if(!f)return;t
  catch(e){showToast('لم تُستعد البيانات: '+(e.message||'ملف غير صالح'))}finally{event.target.value=''}}
 function installApp(){if(deferredInstall){deferredInstall.prompt();deferredInstall=null}}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('installBtn').classList.remove('hidden')});
-window.addEventListener('storage',e=>{if([KEY,...Object.values(DATA_KEYS)].includes(e.key)){if(e.key===KEY)state=readState();if(activeView==='today'||activeView==='week')renderAll()}});
+window.addEventListener('storage',e=>{if([KEY,...Object.values(DATA_KEYS)].includes(e.key)){if(e.key===KEY)state=readState();if(activeView==='today'||activeView==='week')renderAll();else syncNativeWidget()}});
 window.addEventListener('popstate',()=>navigate((location.hash||'#today').slice(1),false));
 for(const k of ['memo','home','car','docs'])$('module-'+k).addEventListener('load',()=>{if(activeView==='today')renderAll()});
 $('quickTitle').addEventListener('keydown',e=>{if(e.key==='Enter')addQuickTask()});
