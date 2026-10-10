@@ -7,5 +7,16 @@
     <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize">
       <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
     </activity>
+    <activity android:name=".WidgetConfigActivity"
+              android:exported="true"
+              android:label="إعدادات ويجت BAS"/>
+    <receiver android:name=".BasWidgetProvider" android:exported="true"
+              android:label="BAS | أعمال اليوم">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider"
+                 android:resource="@xml/bas_widget_info"/>
+    </receiver>
   </application>
 </manifest>
