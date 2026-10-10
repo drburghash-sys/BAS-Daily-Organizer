@@ -1,0 +1,17 @@
+{
+ "name":"BAS | منظم يومي متكامل",
+ "short_name":"BAS يومي",
+ "description":"الجدول والمفكرة وصيانة البيت والسيارة والوثائق في تطبيق واحد",
+ "lang":"ar",
+ "dir":"rtl",
+ "id":"./index.html",
+ "start_url":"./index.html",
+ "scope":"./",
+ "display":"standalone",
+ "background_color":"#061321",
+ "theme_color":"#071422",
+ "icons":[
+  {"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+  {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+ ]
+}

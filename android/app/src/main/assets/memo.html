@@ -1,0 +1,229 @@
+<!doctype html><html lang="ar" dir="rtl"><head>
+<!-- Embedded personal snapshot removed; user imports own backup. -->
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>مفكرتي V3</title><style>
+:root{
+ --cream:#f7f0e6;--paper:#fffaf3;--ink:#28231f;--mut:#7b7068;--line:#e8ddcf;
+ --coral:#d86f51;--coral2:#f6ded5;--olive:#69775a;--olive2:#e9eddf;
+ --plum:#6f526f;--plum2:#eee4ee;--gold:#b98943;--red:#a94b43;
+}
+*{box-sizing:border-box}
+html{background:var(--cream)}
+body{margin:0;color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans Arabic",Tahoma,sans-serif;
+ background:
+ radial-gradient(circle at 8% 3%,#f6d9cf 0 11%,transparent 25%),
+ radial-gradient(circle at 92% 17%,#e9eddc 0 10%,transparent 24%),
+ var(--cream);min-height:100vh}
+header{max-width:930px;margin:auto;padding:26px 18px 8px;background:transparent;color:var(--ink)}
+header h1{margin:0;font-size:30px;letter-spacing:-.5px}
+header .sub{font-size:13px;color:var(--mut);margin-top:4px}
+main{max-width:930px;margin:auto;padding:8px 12px 112px}
+.page{display:none}.page.on{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:none}}
+.page-hero{border-radius:26px;padding:18px 18px 16px;margin:8px 0 15px;position:relative;overflow:hidden}
+.page-hero:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;left:-45px;top:-55px;background:#ffffff35}
+.page-hero h2{margin:0;font-size:24px}.page-hero p{margin:5px 0 0;font-size:13px;opacity:.78}
+#home .page-hero{background:linear-gradient(135deg,#efb39f,#f5ddd3)}
+#inbox .page-hero{background:linear-gradient(135deg,#dfe6ca,#eef1df)}
+#topics .page-hero{background:linear-gradient(135deg,#d7bfd9,#eee4ee)}
+#oncall .page-hero{background:linear-gradient(135deg,#e8c891,#f4e7cd)}
+#all .page-hero{background:linear-gradient(135deg,#cfdde2,#e8eff1)}
+#data .page-hero{background:linear-gradient(135deg,#d7d0c8,#eee9e2)}
+.card{background:#fffdf9cc;backdrop-filter:blur(8px);border:1px solid #ffffffaa;border-radius:24px;padding:16px;margin:12px 0;
+ box-shadow:0 10px 28px rgba(95,73,55,.07)}
+.title{font-weight:900;font-size:18px}.mut{font-size:13px;color:var(--mut);line-height:1.6}.big{font-size:30px;font-weight:950;color:var(--coral)}
+.row{display:flex;gap:9px;flex-wrap:wrap}.grow{flex:1;min-width:140px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+button,input,select,textarea{font:inherit}
+button{border:0;border-radius:14px;padding:10px 13px;font-weight:800;cursor:pointer;transition:.15s transform}
+button:active{transform:scale(.97)}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:14px;padding:11px;background:#fffdf9;color:var(--ink)}
+textarea{min-height:90px}
+label{display:block;font-size:12px;color:var(--mut);margin:7px 2px 4px}
+.primary{background:var(--coral);color:white}.soft{background:var(--coral2);color:#8a422f}
+.success{background:var(--olive2);color:#47573b}.danger{background:#f7e0dd;color:var(--red)}.warn{background:#f7ead4;color:#805714}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#f1e9df;color:#65574b;font-size:11px;margin:2px}
+.item{border:0;border-radius:18px;padding:13px;margin:9px 0;background:#fff;box-shadow:0 5px 14px #725b4810;position:relative}
+.item.today:before,.item.late:before{content:"";position:absolute;right:0;top:14px;bottom:14px;width:5px;border-radius:5px}
+.item.today:before{background:var(--olive)}.item.late:before{background:var(--red)}
+.item.done{opacity:.55}.item h3{margin:0;font-size:16px}.meta{font-size:12px;color:var(--mut);margin-top:4px}.desc{white-space:pre-wrap;margin-top:8px;line-height:1.55}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
+.sum{background:#fff;border:1px solid #f0e6da;border-radius:18px;padding:12px;text-align:right}.sum b{display:block;font-size:24px;color:var(--coral)}.sum span{font-size:11px;color:var(--mut)}
+.topic{border-right:0;background:linear-gradient(145deg,#fff,#f6eef6)}
+.oncall{border-right:0;background:linear-gradient(145deg,#fff,#fbefe3)}
+.daygrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{padding:9px 5px;border:1px solid #efe5d9;border-radius:16px;text-align:center;font-size:12px;background:#fff;cursor:pointer;transition:.15s transform,.15s box-shadow}.day:active{transform:scale(.97)}.day:hover{box-shadow:0 5px 14px #725b4818}
+.day.oc{background:#f8ddd8}.day.pc{background:#f5e8cf}
+.fab{position:fixed;left:18px;bottom:91px;width:68px;height:52px;border-radius:18px;font-size:28px;background:var(--coral);color:white;box-shadow:0 10px 28px #8a4e3945;z-index:31}
+.tabs{position:fixed;z-index:40;bottom:12px;left:50%;transform:translateX(-50%);width:min(94%,720px);
+ display:grid;grid-template-columns:repeat(6,1fr);gap:4px;background:#2d2925ed;backdrop-filter:blur(12px);
+ padding:7px;border-radius:22px;box-shadow:0 14px 35px #0004}
+.tabs button{background:transparent;color:#e8ded4;border-radius:15px;padding:9px 4px;font-size:11px}
+.tabs button.on{background:#fff4e9;color:#7c4031}
+dialog{border:0;border-radius:25px;padding:0;width:min(94%,700px);background:var(--paper)}
+dialog::backdrop{background:#2d29258a;backdrop-filter:blur(3px)}
+.dlg{padding:18px;max-height:88vh;overflow:auto}
+.types{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:11px 0}
+.types button{background:#f1e8de;color:#5c5147}.types button.on{background:var(--coral);color:white}
+.empty{text-align:center;color:var(--mut);padding:24px}
+#capture .page-hero{background:linear-gradient(135deg,#b9ddd0,#e4f0ea)}
+#memory .page-hero{background:linear-gradient(135deg,#cfdde2,#e8eff1)}
+.captureCard{background:linear-gradient(145deg,#274039,#1f2d29);color:#fff}
+.captureCard textarea{background:#18231f;color:#fff;border-color:#496158;min-height:120px}
+.captureCard .primary{background:#8ad9b8;color:#17372d}
+.memoryMark{border-right:5px solid #78bda1}
+.migrate{background:#eef6f1;border:1px solid #d8eadf;color:#486157;border-radius:16px;padding:10px;margin:10px 0;font-size:12px}
+.hidden{display:none!important}
+@media(max-width:700px){
+ header{padding:20px 15px 5px}header h1{font-size:26px}.grid2,.grid3{grid-template-columns:1fr}
+ .types{grid-template-columns:repeat(2,1fr)}.summary{grid-template-columns:repeat(2,1fr)}
+ .daygrid{grid-template-columns:repeat(4,1fr)}.tabs{grid-template-columns:repeat(6,1fr);width:96%}
+ .tabs button{font-size:10px;padding:9px 2px}
+}
+</style></head><body><header>
+  <h1>مفكرتي</h1>
+  <div class="sub">التقط ما يخطر لك فورًا، وحوّل ما يحتاج تنفيذًا إلى عمل منظم.</div>
+</header><main>
+<section id="home" class="page on"><div class="page-hero"><h2>مساحة اليوم</h2><p>ما يحتاج انتباهك الآن، بلا زحام.</p></div><div id="homeSummary" class="card"></div><div id="alerts"></div><div id="todayList"></div><div class="card"><div class="row"><div class="grow"><div class="title">الأيام القادمة</div><div class="mut">المهام غير المؤرخة تتوزع تلقائيًا مع تخفيف يوم المناوبة واليوم التالي.</div></div><button class="soft" onclick="redistribute()">إعادة ترتيب الأسبوع</button></div><div id="week"></div></div></section>
+<section id="inbox" class="page"><div class="page-hero"><h2>صندوق الالتقاط</h2><p>أي شيء خطر لك لحظيًا ينتظر ترتيبه هنا.</p></div><div class="card"><div class="title">الوارد السريع</div><div id="inboxList"></div></div></section>
+<section id="capture" class="page"><div class="page-hero"><h2>قبل أن أنسى</h2><p>اكتبها الآن كما هي. التنظيم يأتي لاحقًا.</p></div><div id="migrationNote"></div><div class="card captureCard"><div class="title">ما الذي لا تريد أن تنساه؟</div><textarea id="quickMemory" placeholder="اسم، سعر، مكان، معلومة، رابط، شيء أعجبك…"></textarea><div class="actions"><button class="primary" onclick="saveMemory()">حفظ فورًا</button></div></div><div class="card"><div class="title">الأحدث</div><div id="recentMemory"></div></div></section>
+<section id="memory" class="page"><div class="page-hero"><h2>المفكرة</h2><p>المحفوظات السريعة والمعلومات التي لا تحتاج موعدًا.</p></div><div class="card"><input id="memorySearch" placeholder="ابحث في المفكرة…" oninput="renderMemory()"></div><div id="memoryList"></div></section>
+<section id="topics" class="page"><div class="page-hero"><h2>تنظيم</h2><p>الموضوعات والمناوبات وكل الأعمال والنسخ الاحتياطي.</p></div><div class="card"><div class="actions"><button class="primary" onclick="openNew('topic')">＋ موضوع جديد</button><button class="warn" onclick="showPage('oncall')">المناوبات</button><button class="soft" onclick="showPage('all')">كل الأعمال</button><button class="success" onclick="showPage('data')">النسخ الاحتياطي</button></div></div><div id="topicsList"></div></section>
+<section id="oncall" class="page"><div class="page-hero"><h2>إيقاع المناوبات</h2><p>أيام العمل الثقيلة تغيّر توزيع بقية أسبوعك تلقائيًا.</p></div><div class="card"><div class="title">جدول المناوبات</div><div class="grid2"><div><label>التاريخ</label><input id="ocDate" type="date"></div><div><label>ملاحظة</label><input id="ocNote" placeholder="مثال: 24h On-call"></div></div><div class="actions"><button class="primary" onclick="addOnCall()">إضافة مناوبة</button></div></div><div id="oncallList"></div></section>
+<section id="all" class="page"><div class="page-hero"><h2>المشهد الكامل</h2><p>كل ما سجلته في مكان واحد مع فلاتر بسيطة.</p></div><div class="card"><div class="grid3"><div><label>النوع</label><select id="fType" onchange="renderAll()"><option value="">الكل</option><option value="task">مهمة</option><option value="appointment">موعد</option><option value="idea">فكرة</option><option value="followup">متابعة</option></select></div><div><label>الموضوع</label><select id="fTopic" onchange="renderAll()"></select></div><div><label>الحالة</label><select id="fStatus" onchange="renderAll()"><option value="">الكل</option><option value="open">مفتوح</option><option value="done">مكتمل</option></select></div></div></div><div id="allList"></div></section>
+<section id="data" class="page"><div class="page-hero"><h2>الخزنة</h2><p>نسخ احتياطي واستعادة من دون تعقيد.</p></div><div class="card"><div class="title">حماية البيانات</div><div class="mut">الحفظ محلي. صدّر نسخة JSON بانتظام.</div><div class="actions"><button class="primary" onclick="exportData()">تصدير JSON</button><button class="soft" onclick="imp.click()">استعادة JSON</button><input id="imp" class="hidden" type="file" accept=".json" onchange="importData(event)"></div></div><div class="card"><div class="mut">المواعيد ثابتة. الأفكار لا تدخل الجدول. المهام غير المؤرخة فقط يعاد توزيعها حول المناوبات.</div></div></section>
+</main><button class="fab" onclick="openNew()">＋</button>
+<nav class="tabs" aria-label="التنقل الرئيسي" style="grid-template-columns:repeat(4,1fr)">
+<button class="on" data-p="home">اليوم</button>
+<button data-p="capture">قبل أن أنسى</button>
+<button data-p="memory">المفكرة</button>
+<button data-p="topics">تنظيم</button>
+</nav>
+<dialog id="dayDlg"><div class="dlg">
+<div class="title" id="dayDlgTitle">أعمال اليوم</div>
+<div class="mut" id="dayDlgMeta"></div>
+<div id="dayDlgList" style="margin-top:10px"></div>
+<div class="actions">
+<button class="primary" id="addForDayBtn">＋ إضافة لهذا اليوم</button>
+<button class="soft" onclick="dayDlg.close()">إغلاق</button>
+</div></div></dialog>
+<dialog id="dlg"><div class="dlg"><div class="title" id="dlgTitle">إضافة</div><input id="editId" type="hidden"><div class="types" id="types"><button data-t="task">✅ مهمة</button><button data-t="appointment">📅 موعد</button><button data-t="idea">💡 فكرة</button><button data-t="followup">🔁 متابعة</button><button data-t="topic">📁 موضوع</button></div><input id="itemType" type="hidden" value="task"><label>العنوان</label><input id="itemTitle" placeholder="اكتب ما تريد حفظه"><label>تفاصيل</label><textarea id="details"></textarea><div id="normal"><div class="grid2"><div><label>ربط بموضوع</label><select id="topicId"></select></div><div><label>الأولوية</label><select id="priority"><option value="1">عادية</option><option value="2">مهمة</option><option value="3">عاجلة</option></select></div><div id="sizeWrap"><label>حجم المهمة</label><select id="size"><option value="1">قصيرة</option><option value="2" selected>متوسطة</option><option value="4">طويلة</option></select></div><div id="dateWrap"><label id="dateLabel">التاريخ</label><input id="itemDate" type="date"></div><div id="timeWrap"><label>الوقت</label><input id="itemTime" type="time"></div></div></div><div class="actions"><button class="primary" onclick="saveItem()">حفظ</button><button class="soft" onclick="dlg.close()">إلغاء</button></div></div></dialog>
+<script>
+const KEY='workbook_daily_manager_v1',meta={task:['✅','مهمة'],appointment:['📅','موعد'],idea:['💡','فكرة'],followup:['🔁','متابعة'],topic:['📁','موضوع']};
+function uid(){return 'id'+Date.now()+Math.random().toString(16).slice(2)}function iso(d=new Date()){let x=new Date(d-d.getTimezoneOffset()*60000);return x.toISOString().slice(0,10)}function pd(s){let a=s.split('-').map(Number);return new Date(a[0],a[1]-1,a[2])}function addDays(s,n){let d=pd(s);d.setDate(d.getDate()+n);return iso(d)}function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x&&x.items)return x}catch(e){}return{items:[],oncalls:[],history:[],memories:[]}}let db=load();if(!db.memories)db.memories=[];
+function syncHomeWidget(){try{if(window.Android&&typeof Android.syncTasks==='function')Android.syncTasks(JSON.stringify(db));}catch(e){}}
+const MERGE_FLAG='mofakkirati_v3_legacy_merge_done';
+function migrateLegacy(){
+  if(localStorage.getItem(MERGE_FLAG)==='1')return;
+  let importedWork=0,importedMemory=0;
+  // دفتر الأعمال القديم يستخدم المفتاح نفسه؛ load() أعلاه يحافظ على بياناته تلقائياً.
+  importedWork=(db.items||[]).length+(db.oncalls||[]).length;
+  try{
+    const old=JSON.parse(localStorage.getItem('before_i_forget_v1')||'null');
+    if(old&&Array.isArray(old.notes)){
+      const existing=new Set((db.memories||[]).map(x=>x.legacyId||x.id));
+      old.notes.forEach(n=>{
+        const lid='bif_'+n.id;
+        if(existing.has(lid))return;
+        db.memories.push({
+          id:uid(),legacyId:lid,text:n.text||'',category:n.cat||'بدون تصنيف',
+          tags:Array.isArray(n.tags)?n.tags:[],link:n.link||'',extra:n.extra||'',
+          fav:!!n.fav,created:n.date||new Date().toISOString()
+        });
+        importedMemory++;
+      });
+    }
+  }catch(e){}
+  localStorage.setItem(MERGE_FLAG,'1');
+  localStorage.setItem(KEY,JSON.stringify(db));
+  sessionStorage.setItem('mofakkirati_merge_message',JSON.stringify({work:importedWork,memory:importedMemory}));
+}
+migrateLegacy();function save(){localStorage.setItem(KEY,JSON.stringify(db));syncHomeWidget();render()}function topics(){return db.items.filter(x=>x.type==='topic'&&!x.deleted)}function topicName(id){return topics().find(x=>x.id===id)?.title||''}function oncall(s){return db.oncalls.some(x=>x.date===s)}function postcall(s){return oncall(addDays(s,-1))}function cap(s){return oncall(s)?1:postcall(s)?2:4}function weight(x){return Number(x.size||2)}function dateOf(x){return x.date||x.autoDate||''}function open(x){return !x.done&&!x.deleted}function overdue(x){let d=dateOf(x);return open(x)&&d&&d<iso()&&!['idea','topic'].includes(x.type)}function today(x){return open(x)&&dateOf(x)===iso()}
+function redistribute(){db.items.forEach(x=>{if(x.type==='task'&&!x.date&&open(x))x.autoDate=''});let use={};for(let i=0;i<21;i++)use[addDays(iso(),i)]=0;db.items.filter(x=>x.type==='task'&&x.date&&open(x)).forEach(x=>{if(use[x.date]!=null)use[x.date]+=weight(x)});let tasks=db.items.filter(x=>x.type==='task'&&!x.date&&open(x)).sort((a,b)=>b.priority-a.priority||a.created.localeCompare(b.created));tasks.forEach(t=>{for(let i=0;i<21;i++){let d=addDays(iso(),i);if(use[d]+weight(t)<=cap(d)){t.autoDate=d;use[d]+=weight(t);break}}});saveNoLoop()}
+function saveNoLoop(){localStorage.setItem(KEY,JSON.stringify(db));syncHomeWidget();render()}
+function render(){renderSelects();renderHome();renderInbox();renderTopics();renderOncalls();renderAll();renderMemory();renderMigrationNote()}
+function renderSelects(){let o='<option value="">بدون موضوع</option>'+topics().map(t=>`<option value="${t.id}">${esc(t.title)}</option>`).join('');topicId.innerHTML=o;fTopic.innerHTML='<option value="">كل الموضوعات</option>'+topics().map(t=>`<option value="${t.id}">${esc(t.title)}</option>`).join('')}
+function itemHTML(x){let m=meta[x.type],d=dateOf(x),tp=topicName(x.topicId);return `<div class="item ${x.done?'done':''} ${overdue(x)?'late':''} ${today(x)?'today':''}"><h3>${m[0]} ${esc(x.title)}</h3><div class="meta">${m[1]}${tp?' · '+esc(tp):''}${d?' · '+d:''}${x.time?' · '+x.time:''}</div>${x.details?`<div class="desc">${esc(x.details)}</div>`:''}<div class="actions">${!['idea','topic'].includes(x.type)?`<button class="success" onclick="toggle('${x.id}')">${x.done?'إعادة فتح':'تم'}</button>`:''}<button class="soft" onclick="editItem('${x.id}')">تعديل</button><button class="danger" onclick="delItem('${x.id}')">حذف</button></div></div>`}
+function renderHome(){let work=db.items.filter(x=>open(x)&&!['idea','topic'].includes(x.type)),st={today:work.filter(today).length,late:work.filter(overdue).length,appts:work.filter(x=>x.type==='appointment'&&x.date>=iso()).length,topics:topics().length};homeSummary.innerHTML=`<div class="title">${new Date().toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'long'})}</div><div class="mut">${oncall(iso())?'🔴 مناوبة اليوم':postcall(iso())?'🟡 اليوم التالي للمناوبة':'🟢 يوم عادي'}</div><div class="summary"><div class="sum"><b>${st.today}</b><span>اليوم</span></div><div class="sum"><b>${st.late}</b><span>متأخر</span></div><div class="sum"><b>${st.appts}</b><span>مواعيد قادمة</span></div><div class="sum"><b>${st.topics}</b><span>موضوعات</span></div></div>`;let late=work.filter(overdue);alerts.innerHTML=late.length?`<div class="card"><div class="title">⚠️ متأخرات</div>${late.slice(0,5).map(itemHTML).join('')}<button class="soft" onclick="redistribute()">إعادة توزيع</button></div>`:'';let arr=work.filter(today).sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')||Number(b.priority||0)-Number(a.priority||0)||String(a.created||'').localeCompare(String(b.created||'')));todayList.innerHTML=arr.length?`<div class="card"><div class="title">أعمال اليوم</div>${arr.map(itemHTML).join('')}</div>`:'<div class="card empty">لا يوجد شيء محدد لليوم.</div>';let h='<div class="daygrid">';for(let i=0;i<7;i++){let d=addDays(iso(),i),n=work.filter(x=>dateOf(x)===d).length;h+=`<div class="day ${oncall(d)?'oc':postcall(d)?'pc':''}" onclick="openDay('${d}')"><b>${pd(d).toLocaleDateString('ar-SA',{weekday:'short'})}</b><div>${pd(d).getDate()}</div><div>${n} عنصر</div>${oncall(d)?'<div>🔴 مناوبة</div>':postcall(d)?'<div>🟡 بعد مناوبة</div>':''}</div>`}week.innerHTML=h+'</div>'}
+
+let selectedDayDate='';
+function openDay(date){
+  selectedDayDate=date;
+  const d=pd(date);
+  dayDlgTitle.textContent='أعمال '+d.toLocaleDateString('ar-SA',{weekday:'long',day:'numeric',month:'long'});
+  dayDlgMeta.textContent=oncall(date)?'🔴 يوم مناوبة':postcall(date)?'🟡 اليوم التالي للمناوبة':'🟢 يوم عادي';
+  const arr=db.items.filter(x=>open(x)&&!['idea','topic'].includes(x.type)&&dateOf(x)===date)
+    .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')||Number(b.priority||0)-Number(a.priority||0));
+  dayDlgList.innerHTML=arr.length?arr.map(itemHTML).join(''):'<div class="empty">لا توجد أعمال في هذا اليوم.</div>';
+  addForDayBtn.onclick=()=>{
+    dayDlg.close();
+    openNew('task');
+    itemDate.value=date;
+  };
+  dayDlg.showModal();
+}
+
+function renderInbox(){let a=db.items.filter(x=>open(x)&&x.type!=='topic'&&!x.date&&!x.autoDate);inboxList.innerHTML=a.length?a.map(itemHTML).join(''):'<div class="empty">لا توجد عناصر غير مرتبة.</div>'}
+function renderTopics(){let a=topics();topicsList.innerHTML=a.length?a.map(t=>{let linked=db.items.filter(x=>!x.deleted&&x.topicId===t.id);return `<div class="card topic"><div class="title">📁 ${esc(t.title)}</div><div class="mut">${linked.length} عنصر مرتبط · ${linked.filter(open).length} مفتوح</div>${t.details?`<div class="desc">${esc(t.details)}</div>`:''}<div class="actions"><button class="primary" onclick="openNew('task','${t.id}')">＋ إضافة داخل الموضوع</button><button class="soft" onclick="editItem('${t.id}')">تعديل</button></div></div>`}).join(''):'<div class="card empty">لا توجد موضوعات بعد.</div>'}
+function renderOncalls(){let a=[...db.oncalls].sort((a,b)=>a.date.localeCompare(b.date));oncallList.innerHTML=a.length?a.map(x=>`<div class="card oncall"><div class="row"><div class="grow"><div class="title">🔴 ${x.date}</div><div class="mut">${esc(x.note||'مناوبة')}</div></div><button class="danger" onclick="removeOnCall('${x.id}')">حذف</button></div></div>`).join(''):'<div class="card empty">لم تضف مناوبات بعد.</div>'}
+function renderAll(){let a=db.items.filter(x=>x.type!=='topic'&&!x.deleted).filter(x=>!fType.value||x.type===fType.value).filter(x=>!fTopic.value||x.topicId===fTopic.value).filter(x=>!fStatus.value||(fStatus.value==='done'?x.done:!x.done));a.sort((a,b)=>(dateOf(a)||'9999').localeCompare(dateOf(b)||'9999')||(a.time||'99:99').localeCompare(b.time||'99:99')||Number(b.priority||0)-Number(a.priority||0));allList.innerHTML=a.length?a.map(itemHTML).join(''):'<div class="card empty">لا توجد عناصر مطابقة.</div>'}
+function choose(t){itemType.value=t;document.querySelectorAll('#types button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));normal.classList.toggle('hidden',t==='topic');sizeWrap.classList.toggle('hidden',t!=='task');timeWrap.classList.toggle('hidden',!['task','appointment'].includes(t));dateWrap.classList.toggle('hidden',t==='idea');dateLabel.textContent=t==='appointment'?'تاريخ الموعد':t==='followup'?'تاريخ المتابعة':'تاريخ محدد (اختياري)'}document.querySelectorAll('#types button').forEach(b=>b.onclick=()=>choose(b.dataset.t));
+function openNew(t='task',tp=''){editId.value='';itemTitle.value='';details.value='';priority.value='1';size.value='2';itemDate.value='';itemTime.value='';topicId.value=tp;dlgTitle.textContent='إضافة جديدة';choose(t);dlg.showModal()}
+function saveItem(){let t=itemType.value,title=itemTitle.value.trim();if(!title)return alert('اكتب العنوان');let old=db.items.find(x=>x.id===editId.value),obj={id:old?.id||uid(),type:t,title,details:details.value.trim(),topicId:t==='topic'?'':topicId.value,priority:t==='topic'?1:+priority.value,size:t==='task'?+size.value:1,date:['idea','topic'].includes(t)?'':itemDate.value,time:['task','appointment'].includes(t)?itemTime.value:'',autoDate:old?.autoDate||'',done:old?.done||false,deleted:false,created:old?.created||new Date().toISOString()};if(t==='appointment'&&!obj.date)return alert('حدد تاريخ الموعد');if(t==='followup'&&!obj.date)return alert('حدد تاريخ المتابعة');if(old)Object.assign(old,obj);else db.items.push(obj);dlg.close();redistribute()}
+function editItem(id){let x=db.items.find(x=>x.id===id);editId.value=x.id;itemTitle.value=x.title;details.value=x.details||'';priority.value=x.priority||1;size.value=x.size||2;itemDate.value=x.date||'';itemTime.value=x.time||'';dlgTitle.textContent='تعديل';choose(x.type);topicId.value=x.topicId||'';dlg.showModal()}
+function toggle(id){let x=db.items.find(x=>x.id===id);x.done=!x.done;redistribute()}function delItem(id){if(confirm('حذف العنصر؟')){db.items.find(x=>x.id===id).deleted=true;save()}}
+function addOnCall(){if(!ocDate.value)return alert('حدد التاريخ');if(db.oncalls.some(x=>x.date===ocDate.value))return alert('مسجلة بالفعل');db.oncalls.push({id:uid(),date:ocDate.value,note:ocNote.value.trim()});ocDate.value='';ocNote.value='';redistribute()}function removeOnCall(id){if(confirm('حذف المناوبة؟')){db.oncalls=db.oncalls.filter(x=>x.id!==id);redistribute()}}
+
+function saveMemory(){
+  let v=(quickMemory.value||'').trim();if(!v)return;
+  db.memories.unshift({id:uid(),text:v,category:'بدون تصنيف',tags:[],link:'',extra:'',fav:false,created:new Date().toISOString()});
+  quickMemory.value='';save();
+}
+function memoryText(n){return [n.text,n.extra,n.link,(n.tags||[]).join(' ')].filter(Boolean).join(' ')}
+function memoryHTML(n){
+  return `<div class="item memoryMark"><h3>${esc(n.text)}</h3>
+  <div class="meta">${n.category?esc(n.category)+' · ':''}${new Date(n.created).toLocaleString('ar-SA')}</div>
+  ${n.extra?`<div class="desc">${esc(n.extra)}</div>`:''}
+  <div class="actions">
+    <button class="primary" onclick="memoryTo('${n.id}','task')">مهمة</button>
+    <button class="warn" onclick="memoryTo('${n.id}','appointment')">موعد</button>
+    <button class="success" onclick="memoryTo('${n.id}','followup')">متابعة</button>
+    <button class="soft" onclick="memoryTo('${n.id}','idea')">فكرة</button>
+    <button class="danger" onclick="deleteMemory('${n.id}')">حذف</button>
+  </div></div>`;
+}
+function renderMemory(){
+  if(typeof recentMemory==='undefined'||typeof memoryList==='undefined')return;
+  let q=(typeof memorySearch!=='undefined'?memorySearch.value:'').trim().toLowerCase();
+  let a=[...(db.memories||[])].sort((a,b)=>(b.created||'').localeCompare(a.created||''));
+  if(q)a=a.filter(n=>memoryText(n).toLowerCase().includes(q));
+  recentMemory.innerHTML=[...(db.memories||[])].sort((a,b)=>(b.created||'').localeCompare(a.created||'')).slice(0,5).map(memoryHTML).join('')||'<div class="empty">ابدأ بأول معلومة.</div>';
+  memoryList.innerHTML=a.map(memoryHTML).join('')||'<div class="empty">لا توجد نتائج.</div>';
+}
+function deleteMemory(id){if(confirm('حذف المعلومة؟')){db.memories=db.memories.filter(x=>x.id!==id);save()}}
+function memoryTo(id,tp){let n=db.memories.find(x=>x.id===id);if(!n)return;openNew(tp);itemTitle.value=n.text;details.value=[n.extra,n.link].filter(Boolean).join('\\n')}
+function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id===id));window.scrollTo(0,0);render()}
+function renderMigrationNote(){
+  if(typeof migrationNote==='undefined')return;
+  let raw=sessionStorage.getItem('mofakkirati_merge_message');
+  if(!raw){migrationNote.innerHTML='';return}
+  try{
+    let m=JSON.parse(raw);
+    migrationNote.innerHTML=`<div class="migrate">تم الحفاظ على بيانات دفتر الأعمال السابقة (${m.work} عنصر/مناوبة)، ونقل ${m.memory} محفوظ من «قبل أن أنسى» إلى المفكرة. لن تتكرر عملية النقل.</div>`;
+  }catch(e){migrationNote.innerHTML=''}
+}
+
+function exportData(){let b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Mofakkirati_Backup_'+iso()+'.json';a.click()}function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.items)throw 0;if(confirm('استبدال البيانات الحالية؟')){db=x;save()}}catch(e){alert('ملف غير صالح')}};r.readAsText(f)}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id===b.dataset.p));render()});render();syncHomeWidget();
+</script>
+<script>
+(function(){
+ const nativeSave=(name,text)=>{try{if(window.Android&&typeof Android.saveText==='function'){Android.saveText(name,text);return true}}catch(e){}return false};
+ const oldExport=window.exportData;
+ window.exportData=function(){
+   try{const name='Mofakkirati_Backup_'+(typeof iso==='function'?iso():new Date().toISOString().slice(0,10))+'.json'; const text=JSON.stringify(db,null,2); if(nativeSave(name,text))return;}catch(e){}
+   if(typeof oldExport==='function') return oldExport();
+ };
+})();
+</script>
+</body></html>
