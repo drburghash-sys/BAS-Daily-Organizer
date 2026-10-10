@@ -5,7 +5,7 @@ const KEY='bas_daily_planner_v1';
 const DATA_KEYS={memo:'workbook_daily_manager_v1',home:'home_board_v1',car:'burghash_car_care_v1',docs:'bms_documents_hub_v2'};
 const DAYNAMES=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const PRAYERS=[['Fajr','الفجر'],['Dhuhr','الظهر'],['Asr','العصر'],['Maghrib','المغرب'],['Isha','العشاء']];
-const DEFAULT={settings:{workStart:'07:30',workEnd:'16:00',quranMinutes:30,girlMinutes:15,restMinutes:30,bedtime:'22:30',city:'Tabuk',country:'SA'},done:{},custom:[],oncall:[],oncallOverride:{},prayers:{}};
+const DEFAULT={settings:{workStart:'07:30',workEnd:'16:00',quranMinutes:30,girlMinutes:15,restMinutes:30,bedtime:'22:30',city:'Tabuk',country:'SA'},done:{},custom:[],oncall:[],oncallOverride:{},prayers:{},timeOverrides:{}};
 let state=readState(),selected=localISO(),activeView='today', deferredInstall=null;
 const DAILY_EXTRAS={
  0:[['مؤشرات الدراسات: نوع الدراسة ومقاييس الأثر',25,'science'],['تحديث البرامج: إصلاحات مهمة فقط',40,'programs']],
@@ -16,7 +16,7 @@ const DAILY_EXTRAS={
  5:[['مجلة دار الطيبين: تحرير وإصدار العدد',80,'magazine'],['متابعة صيانة المنزل',30,'home']],
  6:[['صيانة السيارات والمنزل',45,'maintenance'],['مراجعة أسبوعية للمفكرة',30,'management'],['تدريب مؤشرات الدراسات',20,'science']]
 };
-function readState(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(!s)return structuredClone(DEFAULT);return {...structuredClone(DEFAULT),...s,settings:{...DEFAULT.settings,...s.settings},done:s.done||{},custom:Array.isArray(s.custom)?s.custom:[],oncall:Array.isArray(s.oncall)?s.oncall:[],oncallOverride:s.oncallOverride||{},prayers:s.prayers||{}}}catch(e){return JSON.parse(JSON.stringify(DEFAULT))}}
+function readState(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(!s)return structuredClone(DEFAULT);return {...structuredClone(DEFAULT),...s,settings:{...DEFAULT.settings,...s.settings},done:s.done||{},custom:Array.isArray(s.custom)?s.custom:[],oncall:Array.isArray(s.oncall)?s.oncall:[],oncallOverride:s.oncallOverride||{},prayers:s.prayers||{},timeOverrides:s.timeOverrides||{}}}catch(e){return JSON.parse(JSON.stringify(DEFAULT))}}
 function saveState(){localStorage.setItem(KEY,JSON.stringify(state));}
 function readSource(k){try{return JSON.parse(localStorage.getItem(DATA_KEYS[k])||'null')}catch(e){return null}}
 function localISO(d=new Date()){let x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')}
@@ -73,7 +73,25 @@ function dailyPlan(date=selected){const day=weekday(date),week=isWeekday(date),o
  for(const t of memoTasks(date).slice(0,2)){assign('memo:'+t.id,t.title,Math.min(45,Math.max(15,(Number(t.size)||2)*10)),eveStart,bed,'مستحق من مفكرتي · '+(t.date||t.autoDate),'memo',{type:'memo',id:t.id})}
  for(const c of state.custom.filter(t=>t.date<=date&&!t.done)){assign('custom:'+c.id,c.title,Number(c.minutes)||25,eveStart,bed,'مهمة مضافة · '+(c.date<date?'مرحلة من '+c.date:'مقررة اليوم'),'custom',{type:'custom',id:c.id})}}
  else {unscheduled.push('يوم مناوبة: الأنشطة المسائية الاختيارية مؤجلة، بما فيها تدريس البنات عند عدم توفر الوقت.');}
- for(const it of queued){let pos=freeSlot(occupied,it.from,it.to,it.duration);if(pos===null){unscheduled.push(it.title+' ('+fmtNum(it.duration)+' د)');continue}scheduleBlock(events,pos,pos+it.duration,it.id,it.title,it.desc,it.kind,true,it.sourceRef);occupied.push({start:pos,end:pos+it.duration});}
+ // تثبيت المواعيد التي اختارها المستخدم أولاً؛ ثم جدولة بقية الأنشطة حولها.
+ const pinned=state.timeOverrides?.[date]||{},assigned=new Set();
+ for(const it of queued){
+   const slot=pinned[it.id]; if(!slot)continue;
+   const start=Number(slot.start),end=Number(slot.end);
+   if(!Number.isInteger(start)||!Number.isInteger(end)||start<0||end>1440||end-start<5)continue;
+   const conflict=occupancyAt(occupied,start,end);
+   scheduleBlock(events,start,end,it.id,it.title,it.desc,it.kind,true,it.sourceRef);
+   const event=events[events.length-1];event.manual=true;event.conflict=conflict;
+   if(conflict)unscheduled.push('⚠️ تعارض في موعد '+it.title+'؛ راجع الوقت الذي ثبّتّه');
+   occupied.push({start,end});assigned.add(it.id);
+ }
+ for(const it of queued){
+   if(assigned.has(it.id))continue;
+   let pos=freeSlot(occupied,it.from,it.to,it.duration);
+   if(pos===null){unscheduled.push(it.title+' ('+fmtNum(it.duration)+' د)');continue}
+   scheduleBlock(events,pos,pos+it.duration,it.id,it.title,it.desc,it.kind,true,it.sourceRef);
+   occupied.push({start:pos,end:pos+it.duration});
+ }
  return {events:events.sort((a,b)=>a.start-b.start||a.end-b.end),unscheduled,queuelen:queued.length,oncall};}
 function completion(date,id){return !!(state.done[date]||{})[id]}
 function isDone(date,ev){if(ev.sourceRef?.type==='memo'){let src=readSource('memo');return !!src?.items?.find(x=>x.id===ev.sourceRef.id)?.done}if(ev.sourceRef?.type==='custom')return !!state.custom.find(c=>c.id===ev.sourceRef.id)?.done;return completion(date,ev.id)}
@@ -81,15 +99,52 @@ function toggleDone(date,id,checked){const plan=dailyPlan(date),it=plan.events.f
  if(it.sourceRef?.type==='memo'){let d=readSource('memo');let found=d?.items?.find(x=>x.id===it.sourceRef.id);if(found){found.done=checked;localStorage.setItem(DATA_KEYS.memo,JSON.stringify(d));reloadModule('memo')}}
  else if(it.sourceRef?.type==='custom'){let c=state.custom.find(x=>x.id===it.sourceRef.id);if(c){c.done=checked;saveState()}}
  else {state.done[date]??={};state.done[date][id]=checked;saveState()};renderAll()}
-function eventHtml(e,date){const done=isDone(date,e),start=clock(e.start),end=clock(e.end);
- return `<div class="event kind-${ehtml(e.kind)} ${done?'done':''}"><div class="when"><b>${start}</b><small>${end}</small></div><div class="rail"><i></i></div><div class="eventBox"><strong>${ehtml(e.title)}</strong><small>${ehtml(e.desc||'')} · ${fmtNum(e.end-e.start)} دقيقة</small></div>${e.check?`<input type="checkbox" class="tick" aria-label="إنجاز ${ehtml(e.title)}" ${done?'checked':''} onchange="toggleDone('${date}','${ehtml(e.id)}',this.checked)">`:'<span></span>'}</div>`}
+// تعديل فترة أي نشاط ليوم واحد؛ لا يتغير موعد الصلاة أو الدوام من هذه النافذة.
+let editingTime=null;
+function openTimeEditorByIndex(index){
+ const event=dailyPlan(selected).events[index];if(!event)return;
+ if(['prayer','work','rest'].includes(event.kind)){showToast('يمكن تعديل الصلاة والدوام والراحة من الإعدادات');return}
+ editingTime={date:selected,id:event.id};
+ $('timeEditorName').textContent=event.title+' · '+dateText(selected);
+ $('editedStart').value=clock(event.start);
+ $('editedEnd').value=clock(event.end);
+ $('timeEditorError').textContent='';
+ $('timeAutoBtn').disabled=!state.timeOverrides?.[selected]?.[event.id];
+ const modal=$('timeEditor');if(!modal.open)modal.showModal();
+}
+function closeTimeEditor(){ $('timeEditor').close();editingTime=null }
+function saveEditedTime(){
+ if(!editingTime)return;
+ const {date,id}=editingTime,start=minute($('editedStart').value),end=minute($('editedEnd').value);
+ if(start===null||end===null||start<0||end>1440||end-start<5){
+   $('timeEditorError').textContent='اختر بداية ونهاية صحيحتين، بمدة لا تقل عن ٥ دقائق، في اليوم نفسه.';return;
+ }
+ const plan=dailyPlan(date);
+ const blockers=plan.events.filter(e=>e.id!==id &&
+    (['prayer','work','rest'].includes(e.kind)||e.manual));
+ const conflict=blockers.find(e=>start<e.end&&e.start<end);
+ if(conflict){
+   $('timeEditorError').textContent='هذا الموعد يتداخل مع: '+conflict.title+' ('+clock(conflict.start)+' – '+clock(conflict.end)+'). اختر وقتًا آخر.';return;
+ }
+ state.timeOverrides??={};state.timeOverrides[date]??={};
+ state.timeOverrides[date][id]={start,end};
+ saveState();closeTimeEditor();renderAll();showToast('حُفظ وقت العمل لهذا اليوم فقط');
+}
+function resetEditedTime(){
+ if(!editingTime)return;
+ const {date,id}=editingTime;
+ if(state.timeOverrides?.[date]){delete state.timeOverrides[date][id];if(!Object.keys(state.timeOverrides[date]).length)delete state.timeOverrides[date]}
+ saveState();closeTimeEditor();renderAll();showToast('عاد النشاط إلى الجدولة التلقائية');
+}
+function eventHtml(e,date,index){const done=isDone(date,e),start=clock(e.start),end=clock(e.end);
+ return `<div class="event kind-${ehtml(e.kind)} ${done?'done':''}"><button class="when timeTap" onclick="openTimeEditorByIndex(${index})" title="تغيير وقت هذا العمل"><b>${start}</b><small>${end}</small></button><div class="rail"><i></i></div><div class="eventBox"><strong>${ehtml(e.title)}</strong><small>${ehtml(e.desc||'')} · ${fmtNum(e.end-e.start)} دقيقة${e.manual?' · مثبت يدويًا':''}${e.conflict?' ⚠️ تعارض':''}</small>${!['prayer','work','rest'].includes(e.kind)?`<button class="btn tiny editTime" onclick="openTimeEditorByIndex(${index})" aria-label="تغيير وقت ${ehtml(e.title)}">⏱ تغيير الوقت</button>`:''}</div>${e.check?`<input type="checkbox" class="tick" aria-label="إنجاز ${ehtml(e.title)}" ${done?'checked':''} onchange="toggleDone('${date}','${ehtml(e.id)}',this.checked)">`:'<span></span>'}</div>`}
 function renderToday(){let plan=dailyPlan(),day=weekday(selected),p=state.prayers[selected]?.times||{},checkable=plan.events.filter(e=>e.check),done=checkable.filter(e=>isDone(selected,e)).length,pct=checkable.length?Math.round(done*100/checkable.length):0;
  $('heroDate').textContent=dateText(selected);$('selectedDate').value=selected;
  $('heroMessage').textContent=plan.oncall?'يوم المناوبة: التزامات أقل، وترك مساحة للمستشفى.': 'الصلاة والقرآن وتدريس البنات محفوظة أولًا، والمشروعات موزعة أسبوعيًا.';
  $('heroTags').innerHTML=`<span class="pill">${isWeekday(selected)?'🏥 دوام حتى '+ehtml(state.settings.workEnd):'🌤️ نهاية الأسبوع'}</span><span class="pill">${plan.oncall?'🩺 مناوبة':'✨ جدول متوازن'}</span><span class="pill">${fmtNum(plan.events.length)} موعدًا / نشاطًا</span>`;
  $('progressText').textContent=fmtNum(done)+' من '+fmtNum(checkable.length);$('progressPct').textContent=fmtNum(pct)+'٪';$('progressRing').style.setProperty('--progress',pct+'%');
  $('callToggle').textContent='🩺 يوم مناوبة: '+(plan.oncall?'نعم':'لا');
- $('timeline').innerHTML=plan.events.map(e=>eventHtml(e,selected)).join('')||'<p class="empty">لا توجد أنشطة لهذا التاريخ.</p>';
+ $('timeline').innerHTML=plan.events.map((e,index)=>eventHtml(e,selected,index)).join('')||'<p class="empty">لا توجد أنشطة لهذا التاريخ.</p>';
  const missingPrayers=PRAYERS.filter(([x])=>!p[x]);if(missingPrayers.length) $('timeline').insertAdjacentHTML('afterbegin','<p class="status">⚠️ مواقيت الصلاة لم تكتمل. حدّثها من الإعدادات قبل الاعتماد على الجدول؛ الأنشطة قد تتداخل مع الصلاة.</p>');
  $('unscheduled').classList.toggle('hidden',!plan.unscheduled.length);$('unscheduled').innerHTML=plan.unscheduled.length?'<b>لم تتسع لها الفترة المحددة:</b><div>'+plan.unscheduled.map(e=>'<div>• '+ehtml(e)+'</div>').join('')+'</div>':'';
  const alerts=sourceAlerts(selected);$('alertList').innerHTML=alerts.length?alerts.slice(0,10).map(a=>`<div class="alert ${a.type}"><span class="ico">${a.source==='memo'?'📝':a.source==='home'?'🏠':a.source==='car'?'🚘':'📁'}</span><div class="grow"><strong>${ehtml(a.title)}</strong><small>${ehtml(a.detail)}</small></div><button class="btn tiny" onclick="navigate('${a.source}')">فتح</button></div>`).join(''):'<div class="note">لا توجد مواعيد قريبة مسجلة. استعد نسخ بيانات تطبيقاتك لتظهر هنا.</div>';
