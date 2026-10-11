@@ -37,7 +37,8 @@ function todayISO(){return iso()}
 function closeDialog(id){if($(id).open)$(id).close()}
 function refresh(){renderHome();renderTasks();renderLatest();renderRecords();if(page==='settings')renderSettings()}
 function blocking(date){let ev=[],day=parseDay(date).getDay(),s=db.settings;
- if(day<=4){let a=minutes(s.workStart),b=minutes(s.workEnd);if(a!==null&&b!==null&&a<b)ev.push({id:'work',title:'🏥 الدوام',start:a,end:b,kind:'fixed',check:false})}
+ if(day<=4){let override=db.workOverrides?.[date]||{};
+ let a=minutes(override.start||s.workStart),b=minutes(override.end||s.workEnd);if(a!==null&&b!==null&&a<b)ev.push({id:'work',title:'🏥 الدوام',start:a,end:b,kind:'fixed',check:false})}
  let tm=db.prayers[date]?.times||{};
  for(const [k,ar] of SALAH){const a=minutes(tm[k]);if(a!==null)ev.push({id:'prayer-'+k,title:'🕌 صلاة '+(k==='Dhuhr'&&day===5?'الجمعة':ar),start:a,end:Math.min(1440,a+(k==='Dhuhr'&&day===5?40:20)),kind:'fixed',check:true})}
  return ev;
@@ -73,11 +74,27 @@ function markDone(id){let e=daily().events.find(x=>x.id===id);if(!e)return;
  else {db.done[selected]??={};db.done[selected][id]=!db.done[selected][id]}
  persist();refresh();
 }
+function editFixedToday(id){
+ if(id==='work'){
+  const prev=db.workOverrides?.[selected]||{start:db.settings.workStart,end:db.settings.workEnd};
+  const start=prompt('بداية الدوام لهذا التاريخ فقط (HH:mm)',prev.start);if(start===null)return;
+  const end=prompt('نهاية الدوام لهذا التاريخ فقط (HH:mm)',prev.end);if(end===null)return;
+  if(minutes(start)===null||minutes(end)===null||minutes(start)>=minutes(end)){toast('وقت الدوام غير صالح');return}
+  db.workOverrides??={};db.workOverrides[selected]={start,end};
+ }else if(id.startsWith('prayer-')){
+  const key=id.slice(7),old=db.prayers[selected]?.times?.[key]||'';
+  const val=prompt('موعد الصلاة لهذا التاريخ (HH:mm)',old);if(val===null)return;
+  if(minutes(val)===null){toast('موعد الصلاة غير صالح');return}
+  db.prayers[selected]??={times:{},origin:'manual'};
+  db.prayers[selected].times[key]=val;db.prayers[selected].origin='manual';
+ }else return;
+ persist();renderHome();toast('تم تعديل الموعد لهذا التاريخ');
+}
 function renderTimelineEvent(e){let locked=e.kind==='fixed',done=isDone(e);
  return `<div class="timelineItem"><div class="tTime">${clock(e.start)}<small>${clock(e.end)}</small></div>
  <div class="activity ${locked?'fixed':e.customTime?'placed':''}"><strong>${esc(e.title)}</strong>
  <small>${locked?'وقت محجوز':'نشاط مرن'} ${e.customTime?'· غيّرت وقته لهذا اليوم':''} ${e.conflict?' · ⚠️ تعارض':''}</small>
- <div class="controls">${e.kind==='routine'?`<button class="btn tiny" onclick="moveRoutineTime('${esc(e.id)}')">⏱ وقت اليوم</button><button class="btn tiny" onclick="skipRoutine('${esc(e.id)}')">تخطي اليوم</button><button class="btn tiny" onclick="editRoutine('${esc(e.id)}')">التكرار</button>`:''}
+ <div class="controls">${locked?`<button class="btn tiny" onclick="editFixedToday('${esc(e.id)}')">✎ تعديل وقت اليوم</button>`:''}${e.kind==='routine'?`<button class="btn tiny" onclick="moveRoutineTime('${esc(e.id)}')">⏱ وقت اليوم</button><button class="btn tiny" onclick="skipRoutine('${esc(e.id)}')">تخطي اليوم</button><button class="btn tiny" onclick="editRoutine('${esc(e.id)}')">التكرار</button>`:''}
  ${e.kind==='task'?`<button class="btn tiny" onclick="editTask('${esc(e.ref)}')">✎ تعديل</button>`:''}
  ${e.id!=='work'?`<button class="btn tiny" onclick="markDone('${esc(e.id)}')">${done?'↶ تراجع':'✓ أنجزت'}</button>`:''}</div></div></div>`;
 }
