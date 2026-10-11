@@ -5,7 +5,7 @@ function alertsHTML(){
  for(const c of db.vehicles){
   for(const [key,name] of [['insurance','التأمين'],['inspection','الفحص'],['registration','الاستمارة']]){
    if(c[key]&&daysUntil(c[key])<=30)alerts.push([c.name+' · '+name,daysUntil(c[key])<0?'منتهي':'قريب الانتهاء'])}
-  for(const s of c.services||[])if(s.nextDate&&daysUntil(s.nextDate)<=30)alerts.push([c.name+' · '+s.type,'صيانة قريبة'])
+  // Maintenance alerts are shown once by the vehicle-care dashboard, not duplicated here.
  }
  for(const d of db.documents.docs||[])if(d.hasExpiry&&d.expiryDate&&daysUntil(d.expiryDate)<=30)alerts.push([d.name,'وثيقة قاربت الانتهاء']);
  for(const s of db.documents.subs||[])if(s.nextDueDate&&daysUntil(s.nextDueDate)<=15)alerts.push([s.name,'تجديد اشتراك']);
