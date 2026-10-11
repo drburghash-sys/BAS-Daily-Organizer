@@ -77,6 +77,14 @@ public class BasWidgetProvider extends AppWidgetProvider {
     PendingIntent gear=PendingIntent.getActivity(context,500000+widgetId,settings,
         PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
     views.setOnClickPendingIntent(R.id.widget_settings,gear);
+    Intent add=new Intent(context,MainActivity.class);
+    add.setAction("sa.bas.daily.QUICK_CAPTURE_"+widgetId);
+    add.putExtra("start_page","capture");
+    add.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    PendingIntent capture=PendingIntent.getActivity(context,700000+widgetId,add,
+        PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+    views.setOnClickPendingIntent(R.id.widget_add,capture);
+    views.setContentDescription(R.id.widget_add,"فتح إضافة سريعة دون تاريخ أو وقت");
     views.setContentDescription(R.id.widget_image,"BAS منظم يومي: اضغط لعرض الجدول والمهام");
     views.setContentDescription(R.id.widget_settings,"فتح إعدادات هذا الويجت");
     manager.updateAppWidget(widgetId,views);
