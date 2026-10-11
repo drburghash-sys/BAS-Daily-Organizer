@@ -137,7 +137,7 @@ function resetEditedTime(){
  saveState();closeTimeEditor();renderAll();showToast('عاد النشاط إلى الجدولة التلقائية');
 }
 function eventHtml(e,date,index){const done=isDone(date,e),start=clock(e.start),end=clock(e.end);
- return `<div class="event kind-${ehtml(e.kind)} ${done?'done':''}"><button class="when timeTap" onclick="openTimeEditorByIndex(${index})" title="تغيير وقت هذا العمل"><b>${start}</b><small>${end}</small></button><div class="rail"><i></i></div><div class="eventBox"><strong>${ehtml(e.title)}</strong><small>${ehtml(e.desc||'')} · ${fmtNum(e.end-e.start)} دقيقة${e.manual?' · مثبت يدويًا':''}${e.conflict?' ⚠️ تعارض':''}</small>${!['prayer','work','rest'].includes(e.kind)?`<button class="btn tiny editTime" onclick="openTimeEditorByIndex(${index})" aria-label="تغيير وقت ${ehtml(e.title)}">⏱ تغيير الوقت</button>`:''}</div>${e.check?`<input type="checkbox" class="tick" aria-label="إنجاز ${ehtml(e.title)}" ${done?'checked':''} onchange="toggleDone('${date}','${ehtml(e.id)}',this.checked)">`:'<span></span>'}</div>`}
+ return `<div class="event kind-${ehtml(e.kind)} ${done?'done':''}"><button class="when timeTap" onclick="openTimeEditorByIndex(${index})" title="تغيير وقت هذا العمل"><b>${start}</b><small>${end}</small></button><div class="rail"><i></i></div><div class="eventBox"><strong>${ehtml(e.title)}</strong><small>${ehtml(e.desc||'')} · ${fmtNum(e.end-e.start)} دقيقة${e.manual?' · مثبت يدويًا':''}${e.conflict?' ⚠️ تعارض':''}</small>${!['prayer','work','rest'].includes(e.kind)?`<button class="btn tiny editTime" onclick="openTimeEditorByIndex(${index})" aria-label="تغيير وقت ${ehtml(e.title)}">⏱ تغيير الوقت</button>`:''}${e.sourceRef?.type==='custom'?`<button class="btn tiny warn deleteTime" onclick="deleteCustomTaskAt(${state.custom.findIndex(c=>c.id===e.sourceRef.id)})" type="button" aria-label="حذف المهمة المضافة">🗑 حذف</button>`:''}</div>${e.check?`<input type="checkbox" class="tick" aria-label="إنجاز ${ehtml(e.title)}" ${done?'checked':''} onchange="toggleDone('${date}','${ehtml(e.id)}',this.checked)">`:'<span></span>'}</div>`}
 function renderToday(){let plan=dailyPlan(),day=weekday(selected),p=state.prayers[selected]?.times||{},checkable=plan.events.filter(e=>e.check),done=checkable.filter(e=>isDone(selected,e)).length,pct=checkable.length?Math.round(done*100/checkable.length):0;
  $('heroDate').textContent=dateText(selected);$('selectedDate').value=selected;
  $('heroMessage').textContent=plan.oncall?'يوم المناوبة: التزامات أقل، وترك مساحة للمستشفى.': 'الصلاة والقرآن وتدريس البنات محفوظة أولًا، والمشروعات موزعة أسبوعيًا.';
@@ -195,13 +195,39 @@ function syncNativeWidget(){
   bridge.syncWidgetData(JSON.stringify({schema:1,days}));
  }catch(err){console.warn('Widget sync unavailable',err)}
 }
-function renderAll(){renderToday();renderWeek();if(activeView==='settings')renderPrayerEditor();syncNativeWidget()}
+function renderAll(){renderToday();renderWeek();renderCustomTaskList();if(activeView==='settings')renderPrayerEditor();syncNativeWidget()}
 function navigate(page,push=true){if(push&&location.hash.slice(1)!==page)history.pushState({page},'', '#'+page);activeView=page;const isModule=['memo','home','car','docs'].includes(page);document.querySelectorAll('.view').forEach(el=>el.classList.toggle('visible',el.id==='view-'+(isModule?'module':page)));document.querySelectorAll('.tab').forEach(el=>{el.classList.toggle('active',el.dataset.nav===page)});for(const v of ['memo','home','car','docs'])$('module-'+v).classList.toggle('visible',page===v);
  if(isModule)$('moduleTitle').textContent={memo:'مفكرتي',home:'صيانة المنزل',car:'صيانة السيارات',docs:'مستنداتي ووثائقي'}[page];if(page==='settings')fillSettings();if(page==='week')renderWeek();if(page==='today')renderToday();window.scrollTo(0,0)}
 function setSelectedDate(v){if(!/^\d{4}-\d\d-\d\d$/.test(v))return;selected=v;renderAll();if(!state.prayers[selected])fetchPrayers(false)}
 function shiftDay(n){setSelectedDate(addDays(selected,n))}
 function toggleOncall(){state.oncallOverride[selected]=!isOncall(selected);saveState();renderAll()}
 function rebuildPlan(){renderAll();showToast('أعيد حساب الخطة وفق الالتزامات والأولويات')}
+/** Remove one manually added task permanently, including its fixed time slots. */
+function deleteCustomTaskAt(index){
+  if(!Number.isInteger(index)||index<0||index>=state.custom.length)return;
+  const task=state.custom[index];
+  if(!task||!window.confirm('حذف المهمة «'+(task.title||'بدون عنوان')+'» نهائيًا من الجدول؟\\nلن تتأثر مهام مفكرتي أو الأنشطة الثابتة.'))return;
+  state.custom.splice(index,1);
+  for(const [day,slots] of Object.entries(state.timeOverrides||{})){
+    if(!slots||typeof slots!=='object')continue;
+    delete slots['custom:'+task.id];
+    if(!Object.keys(slots).length)delete state.timeOverrides[day];
+  }
+  saveState();renderAll();showToast('حُذفت المهمة من الجدول والأيام القادمة');
+}
+function renderCustomTaskList(){
+  const node=$('customTaskList');if(!node)return;
+  const items=state.custom.map((t,i)=>({t,i})).sort((a,b)=>
+    (a.t.done===b.t.done?0:a.t.done?1:-1)||
+    String(a.t.date||'').localeCompare(String(b.t.date||''))||
+    a.i-b.i);
+  node.innerHTML=items.length?items.map(({t,i})=>`
+    <div class="addedTaskRow">
+      <div class="grow"><strong>${ehtml(t.title||'مهمة')}</strong>
+      <small>${ehtml(t.date||'بلا تاريخ')} · ${fmtNum(t.minutes||25)} دقيقة · ${t.done?'✅ منجزة':'⏳ غير منجزة'}</small></div>
+      <button class="btn tiny warn" type="button" onclick="deleteCustomTaskAt(${i})" aria-label="حذف المهمة رقم ${i+1}">🗑 حذف</button>
+    </div>`).join(''):'<p class="note">لا توجد مهام أضفتها يدويًا.</p>';
+}
 function addQuickTask(){const name=$('quickTitle').value.trim();if(!name){showToast('اكتب اسم المهمة أولًا');return}state.custom.push({id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:name,date:selected,minutes:+$('quickMinutes').value,priority:+$('quickPriority').value,done:false});saveState();$('quickTitle').value='';renderAll();showToast('أضيفت المهمة. ستظل ظاهرة حتى إنجازها.')}
 function saveSettings(){let s=state.settings,ws=$('workStart').value,we=$('workEnd').value,bed=$('bedtime').value;
  if(minute(ws)===null||minute(we)===null||minute(ws)>=minute(we)||minute(bed)===null){showToast('تحقق من وقت بداية ونهاية الدوام والنوم');return}
