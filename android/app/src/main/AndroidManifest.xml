@@ -10,6 +10,9 @@
     <activity android:name=".WidgetConfigActivity"
               android:exported="true"
               android:label="إعدادات ويجت BAS"/>
+    <service android:name=".BasWidgetListService"
+              android:permission="android.permission.BIND_REMOTEVIEWS"
+              android:exported="false"/>
     <receiver android:name=".BasWidgetProvider" android:exported="true"
               android:label="BAS | أعمال اليوم">
       <intent-filter>
