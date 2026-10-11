@@ -134,7 +134,7 @@ public class BasWidgetProvider extends AppWidgetProvider {
 
     tp.setTypeface(bold);tp.setColor(accent);tp.setTextSize(19*scale*sp);
     // Leave the leftmost 52dp free for the real, clickable settings gear.
-    canvas.drawText(trimmed("BAS | منظم يومي",tp,w-2*left-54*dp),
+    canvas.drawText(trimmed("BAS | منظمي الموحد",tp,w-2*left-54*dp),
        right,32*dp,tp);
 
     JSONObject day=null;
