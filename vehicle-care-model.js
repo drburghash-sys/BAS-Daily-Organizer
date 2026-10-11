@@ -66,6 +66,7 @@ function serviceStatus(car,item,date=selected){
  if((km!==null&&km<=0)||(days!==null&&days<=0))return {state:'due',label:'مطلوب',km,days};
  if((km!==null&&km<=1000)||(days!==null&&days<=30))return {state:'soon',label:'قادم قريبًا',km,days};
  if(km!==null||days!==null)return {state:'future',label:'قادم',km,days};
+ if(item.lastDate||item.lastKm!==null&&item.lastKm!==undefined&&item.lastKm!=='')return {state:'completed',label:'تم التنفيذ (لا موعد قادم)'};
  return {state:'unconfigured',label:'لم تُحدد آخر صيانة'};
 }
 function dueCare(date=selected){
@@ -77,7 +78,7 @@ function dueCare(date=selected){
  return rows;
 }
 function maintenanceStats(car){
- const counts={due:0,soon:0,future:0,unconfigured:0,disabled:0};
+ const counts={due:0,soon:0,future:0,completed:0,unconfigured:0,disabled:0};
  for(const item of carPlan(car)){const status=serviceStatus(car,item);counts[status.state]++;}
  return counts;
 }
