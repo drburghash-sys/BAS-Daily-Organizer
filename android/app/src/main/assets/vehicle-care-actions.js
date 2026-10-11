@@ -86,15 +86,16 @@ saveService=function(){
  const car=carById($('serviceVehicleId').value),itemId=$('servicePlanId')?.value||'';
  if(!car)return;
  if(!itemId){
-   const before=(car.services||[]).length;
-   previousSaveService();
-   if((car.services||[]).length>before){
-     const log=car.services[car.services.length-1];
-     const idx=carPlan(car).find(x=>x.name===log.type);
-     if(idx){log.itemId=idx.id;log.before=careStateSnapshot(idx);completeCareState(car,idx,log)}
-     persist();refresh();
+   const type=$('serviceType').value.trim();if(!type){toast('اكتب نوع الصيانة');return}
+   const plan=carPlan(car);
+   let custom=plan.find(x=>x.name.trim().toLocaleLowerCase('ar')===type.toLocaleLowerCase('ar'));
+   if(!custom){
+     custom={id:eid('custom-care'),name:type,category:'أخرى',intervalKm:0,intervalMonths:0,
+       lastKm:null,lastDate:'',nextKm:null,nextDate:'',manualRequired:false,disabled:false,notes:''};
+     plan.push(custom);
    }
-   return;
+   $('servicePlanId').value=custom.id;
+   return saveService();
  }
  const item=carItem(car,itemId),type=item?.name;if(!item)return;
  const date=$('serviceDate').value||selected,km=numberOrNull('serviceKm'),
