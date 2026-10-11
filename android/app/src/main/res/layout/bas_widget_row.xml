@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_row_text"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="40dp"
+    android:paddingTop="7dp"
+    android:paddingBottom="7dp"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:gravity="center_vertical|right"
+    android:textAlignment="viewEnd"
+    android:textDirection="firstStrong"
+    android:maxLines="3"
+    android:ellipsize="end"
+    android:textSize="16sp"
+    android:textColor="#F8F5EA" />
