@@ -25,12 +25,11 @@ import android.widget.Toast;
 public class WidgetConfigActivity extends Activity {
   int widgetId;
   EditText bg,fg,accent;
-  Spinner font,rows;
+  Spinner font;
   SeekBar opacity,size;
   CheckBox prayers;
   ImageView preview;
   final String[] families={"sans-serif","sans-serif-condensed","serif","monospace"};
-  final String[] rowValues={"3","4","5","6","7","8"};
 
   @Override public void onCreate(Bundle state){
     super.onCreate(state);
@@ -45,7 +44,7 @@ public class WidgetConfigActivity extends Activity {
     col.setPadding(24,24,24,35);col.setBackgroundColor(Color.rgb(7,20,34));
     scroll.addView(col);
     TextView header=label("تخصيص ويجت BAS | منظم يومي",21);header.setTextColor(Color.rgb(231,196,137));col.addView(header);
-    TextView hint=label("الويجت يعرض مهام اليوم، ويُحدَّث من تطبيق BAS المثبت على الجهاز.",14);col.addView(hint);
+    TextView hint=label("يعرض جميع أعمال اليوم بقائمة تُمرَّر للأعلى والأسفل؛ لن تُخفى المهام بعد أول مجموعة. افتح التطبيق لتحديث البيانات.",14);col.addView(hint);
 
     bg=field(col,"لون الخلفية (HEX)",p.getString("bg"+suffix,"#0B1F31"));
     fg=field(col,"لون الكتابة (HEX)",p.getString("fg"+suffix,"#F8F5EA"));
@@ -74,14 +73,11 @@ public class WidgetConfigActivity extends Activity {
     opacity=new SeekBar(this);opacity.setMax(235);opacity.setProgress(Math.max(0,Math.min(235,p.getInt("alpha"+suffix,225)-20)));
     col.addView(opacity);
 
-    labelInto(col,"عدد المهام المعروضة (حسب حجم الويجت)");
-    rows=new Spinner(this);
-    ArrayAdapter<String> nums=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,rowValues);
-    nums.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    rows.setAdapter(nums);rows.setSelection(Math.max(0,Math.min(5,p.getInt("rows"+suffix,5)-3)));col.addView(rows);
+    TextView allRows=label("عدد الأعمال: جميع أعمال اليوم دون حدّ، مرّر قائمة الويجت لعرض البقية.",14);
+    col.addView(allRows);
 
     prayers=new CheckBox(this);prayers.setText("إظهار الصلوات ضمن الأعمال");
-    prayers.setTextColor(Color.WHITE);prayers.setChecked(p.getBoolean("prayer"+suffix,false));
+    prayers.setTextColor(Color.WHITE);prayers.setChecked(p.getBoolean("prayer"+suffix,true));
     col.addView(prayers);
 
     preview=new ImageView(this);
@@ -90,6 +86,7 @@ public class WidgetConfigActivity extends Activity {
     preview.setImageBitmap(BasWidgetProvider.render(this,widgetId,Math.round(345*density),Math.round(215*density)));
     LinearLayout.LayoutParams imgParam=new LinearLayout.LayoutParams(-1,270);imgParam.topMargin=16;
     col.addView(preview,imgParam);
+    col.addView(label("المعاينة تعرض رأس الويجت فقط؛ الأعمال تظهر تحته بقائمة قابلة للتمرير.",12));
 
     Button save=new Button(this);save.setText("حفظ إعدادات الويجت");
     save.setAllCaps(false);
@@ -133,7 +130,6 @@ public class WidgetConfigActivity extends Activity {
       .putString("font"+suffix,families[font.getSelectedItemPosition()])
       .putInt("size"+suffix,size.getProgress()+70)
       .putInt("alpha"+suffix,opacity.getProgress()+20)
-      .putInt("rows"+suffix,Integer.parseInt(rowValues[rows.getSelectedItemPosition()]))
       .putBoolean("prayer"+suffix,prayers.isChecked())
       .apply();
     AppWidgetManager manager=AppWidgetManager.getInstance(this);
