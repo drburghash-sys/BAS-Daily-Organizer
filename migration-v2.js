@@ -115,3 +115,6 @@ function startUnified(){
  if(!db.prayers[selected])getPrayerTimes(selected);
 }
 startUnified();
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+}
