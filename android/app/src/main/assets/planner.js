@@ -168,12 +168,28 @@ function syncNativeWidget(){
     label:new Intl.DateTimeFormat('ar-SA',{weekday:'long',day:'numeric',month:'short'}).format(fromISO(date)),
     done:checkable.filter(e=>isDone(date,e)).length,
     total:checkable.length,
-    items:checkable.map(e=>({
-      time:clock(e.start),
-      title:String(e.title||'نشاط'),
-      done:isDone(date,e),
-      prayer:e.kind==='prayer'
-    }))
+    // Include every scheduled event, even the fixed work, rest and prayer
+    // blocks. Append everything the scheduler could not fit that day.
+    items:(()=>{
+      const scheduled=plan.events.map(e=>({
+        time:clock(e.start),
+        title:String(e.title||'نشاط'),
+        done:isDone(date,e),
+        prayer:e.kind==='prayer',
+        check:!!e.check
+      }));
+      const includedMemo=new Set(plan.events.filter(e=>e.sourceRef?.type==='memo')
+          .map(e=>String(e.sourceRef.id)));
+      const extraMemo=memoTasks(date).filter(t=>!includedMemo.has(String(t.id)))
+          .map(t=>({time:'',title:String(t.title||'مهمة مفكرة'),done:false,
+                    check:false,unscheduled:true,prayer:false}));
+      const completedCustom=state.custom.filter(t=>t.date===date&&t.done)
+          .map(t=>({time:'',title:String(t.title||'مهمة'),done:true,
+                    check:true,prayer:false}));
+      const pending=plan.unscheduled.map(name=>({time:'',title:String(name),
+                      done:false,check:false,unscheduled:true,prayer:false}));
+      return [...scheduled,...pending,...extraMemo,...completedCustom];
+    })()
    };
   });
   bridge.syncWidgetData(JSON.stringify({schema:1,days}));
