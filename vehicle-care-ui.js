@@ -81,6 +81,7 @@ function renderCareHome(){
 const previousRenderHome=renderHome;
 renderHome=function(){previousRenderHome();renderCareHome()};
 function showCareVehicle(id){
+ if(recordSection!=='vehicles')switchRecords('vehicles');
  go('records');let car=carById(id);if(!car)return;
  const node=[...document.querySelectorAll('.careDetails')][db.vehicles.indexOf(car)];
  if(node){node.open=true;node.scrollIntoView({behavior:'smooth',block:'start'})}
