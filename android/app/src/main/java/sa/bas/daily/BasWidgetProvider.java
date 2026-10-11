@@ -53,8 +53,10 @@ public class BasWidgetProvider extends AppWidgetProvider {
     float density=context.getResources().getDisplayMetrics().density;
     int widthDp=opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,286);
     int heightDp=opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,192);
-    int width=Math.min(510,Math.max(285,Math.round(widthDp*density)));
-    int height=Math.min(360,Math.max(160,Math.round(heightDp*density)));
+    // AppWidgetManager gives dp; build a real physical-pixel bitmap instead of
+    // limiting it to 510 x 360px and stretching it on high-density phones.
+    int width=Math.max(1,Math.round(Math.max(200,Math.min(650,widthDp))*density));
+    int height=Math.max(1,Math.round(Math.max(120,Math.min(690,heightDp))*density));
     RemoteViews views=new RemoteViews(context.getPackageName(),R.layout.bas_widget);
     views.setImageViewBitmap(R.id.widget_image,render(context,widgetId,width,height));
     Intent launch=new Intent(context,MainActivity.class);
@@ -63,7 +65,14 @@ public class BasWidgetProvider extends AppWidgetProvider {
     PendingIntent click=PendingIntent.getActivity(context,widgetId,launch,
         PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
     views.setOnClickPendingIntent(R.id.widget_image,click);
+    Intent settings=new Intent(context,WidgetConfigActivity.class);
+    settings.setAction("sa.bas.daily.WIDGET_SETTINGS_"+widgetId);
+    settings.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId);
+    PendingIntent gear=PendingIntent.getActivity(context,500000+widgetId,settings,
+        PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+    views.setOnClickPendingIntent(R.id.widget_settings,gear);
     views.setContentDescription(R.id.widget_image,"BAS منظم يومي: اضغط لعرض الجدول والمهام");
+    views.setContentDescription(R.id.widget_settings,"فتح إعدادات هذا الويجت");
     manager.updateAppWidget(widgetId,views);
   }
   private static int parseColor(SharedPreferences prefs,String key,int fallback){
@@ -73,78 +82,104 @@ public class BasWidgetProvider extends AppWidgetProvider {
   private static String shortDate(){
     return new SimpleDateFormat("yyyy-MM-dd",Locale.US).format(new Date());
   }
+  private static String trimmed(String value,TextPaint p,float maxPx){
+    return TextUtils.ellipsize(value,p,Math.max(30,maxPx),TextUtils.TruncateAt.END).toString();
+  }
+
+  /** All positions use dp and all fonts use sp (scaledDensity). */
   public static Bitmap render(Context context,int widgetId,int w,int h){
+    final android.util.DisplayMetrics metrics=context.getResources().getDisplayMetrics();
+    final float dp=metrics.density, sp=metrics.scaledDensity;
     final SharedPreferences style=context.getSharedPreferences(STYLE_PREFS,Context.MODE_PRIVATE);
     final String suffix="_"+widgetId;
     final int bg=parseColor(style,"bg"+suffix,Color.rgb(11,31,49));
     final int fg=parseColor(style,"fg"+suffix,Color.rgb(248,245,234));
     final int accent=parseColor(style,"accent"+suffix,Color.rgb(228,184,110));
     final int alpha=Math.max(20,Math.min(255,style.getInt("alpha"+suffix,225)));
-    final float scale=Math.max(.78f,Math.min(1.35f,style.getInt("size"+suffix,100)/100f));
-    final String font=style.getString("font"+suffix,"sans-serif");
+    final float scale=Math.max(.70f,Math.min(1.80f,style.getInt("size"+suffix,110)/100f));
+    final String family=style.getString("font"+suffix,"sans-serif");
     final int preferredRows=Math.max(2,Math.min(8,style.getInt("rows"+suffix,5)));
     final boolean includePrayer=style.getBoolean("prayer"+suffix,false);
-
     Bitmap bitmap=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
     Canvas canvas=new Canvas(bitmap);
-    Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
-    p.setColor(Color.argb(alpha,Color.red(bg),Color.green(bg),Color.blue(bg)));
-    canvas.drawRoundRect(new RectF(1,1,w-1,h-1),22,22,p);
-    p.setColor(accent);p.setStrokeWidth(2);p.setStyle(Paint.Style.STROKE);
-    canvas.drawRoundRect(new RectF(2,2,w-2,h-2),22,22,p);
-    p.setStyle(Paint.Style.FILL);
-    float inset=17f, right=w-inset;
-    Typeface regular=Typeface.create(font,Typeface.NORMAL);
-    Typeface bold=Typeface.create(font,Typeface.BOLD);
+    Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+    paint.setColor(Color.argb(alpha,Color.red(bg),Color.green(bg),Color.blue(bg)));
+    canvas.drawRoundRect(new RectF(dp,dp,w-dp,h-dp),20*dp,20*dp,paint);
+    paint.setColor(accent);
+    paint.setStrokeWidth(1.5f*dp);
+    paint.setStyle(Paint.Style.STROKE);
+    canvas.drawRoundRect(new RectF(2*dp,2*dp,w-2*dp,h-2*dp),20*dp,20*dp,paint);
+    paint.setStyle(Paint.Style.FILL);
+
+    float left=15*dp, right=w-left;
     TextPaint tp=new TextPaint(Paint.ANTI_ALIAS_FLAG|Paint.SUBPIXEL_TEXT_FLAG);
-    tp.setTextAlign(Paint.Align.RIGHT);tp.setTypeface(bold);tp.setColor(accent);
-    tp.setTextSize(Math.max(17f,22f*scale));
-    canvas.drawText("BAS | منظم يومي",right,31f*scale,tp);
+    tp.setTextAlign(Paint.Align.RIGHT);
+    Typeface regular=Typeface.create(family,Typeface.NORMAL);
+    Typeface bold=Typeface.create(family,Typeface.BOLD);
+
+    tp.setTypeface(bold);tp.setColor(accent);tp.setTextSize(19*scale*sp);
+    // Leave the leftmost 52dp free for the real, clickable settings gear.
+    canvas.drawText(trimmed("BAS | منظم يومي",tp,w-2*left-54*dp),
+       right,32*dp,tp);
 
     JSONObject day=null;
     try{
-      String str=context.getSharedPreferences(DATA_PREFS,Context.MODE_PRIVATE).getString(KEY_SNAPSHOT,"");
-      JSONArray arr=new JSONObject(str).optJSONArray("days");
+      String snapshot=context.getSharedPreferences(DATA_PREFS,Context.MODE_PRIVATE)
+          .getString(KEY_SNAPSHOT,"");
+      JSONArray arr=new JSONObject(snapshot).optJSONArray("days");
       if(arr!=null)for(int i=0;i<arr.length();i++){
         JSONObject candidate=arr.optJSONObject(i);
-        if(candidate!=null&&shortDate().equals(candidate.optString("date"))){day=candidate;break;}
+        if(candidate!=null&&shortDate().equals(candidate.optString("date"))){
+          day=candidate;break;
+        }
       }
     }catch(Exception ignored){}
-    tp.setTypeface(regular);tp.setColor(fg);tp.setTextSize(Math.max(13f,15f*scale));
     if(day==null){
-      canvas.drawText("افتح التطبيق لتحديث مهام اليوم",right,h/2f,tp);
-      tp.setTextSize(Math.max(11f,12f*scale));
-      canvas.drawText("المهام تظهر هنا بعد فتح تطبيق BAS",right,h/2f+25,tp);
+      tp.setTypeface(regular);tp.setColor(fg);tp.setTextSize(15.5f*scale*sp);
+      canvas.drawText(trimmed("افتح تطبيق BAS لتحديث الأعمال",tp,w-2*left),
+          right,Math.max(h/2f,69*dp),tp);
       return bitmap;
     }
+
     String date=day.optString("label","اليوم");
     int completed=day.optInt("done",0),total=day.optInt("total",0);
-    tp.setTextSize(Math.max(12f,13f*scale));tp.setColor(fg);
-    canvas.drawText(date,right,51f*scale,tp);
-    tp.setColor(accent);tp.setTypeface(bold);
-    canvas.drawText("الإنجاز: "+completed+" / "+total,right,70f*scale,tp);
-    p.setColor(accent);p.setAlpha(130);
-    float progressWidth=(w-inset*2)*(total<=0?0f:Math.min(1f,(float)completed/total));
-    canvas.drawRoundRect(new RectF(inset,79f*scale,inset+progressWidth,82f*scale),2,2,p);
+    tp.setTypeface(regular);tp.setColor(fg);tp.setTextSize(13.5f*scale*sp);
+    canvas.drawText(trimmed(date,tp,w-2*left),right,56*dp,tp);
+    tp.setTypeface(bold);tp.setColor(accent);tp.setTextSize(14f*scale*sp);
+    canvas.drawText("الإنجاز: "+completed+" / "+total,right,80*dp,tp);
+
+    float trackTop=88*dp,trackHeight=4*dp;
+    paint.setColor(Color.argb(85,Color.red(fg),Color.green(fg),Color.blue(fg)));
+    canvas.drawRoundRect(new RectF(left,trackTop,w-left,trackTop+trackHeight),
+        trackHeight/2,trackHeight/2,paint);
+    paint.setColor(accent);
+    float fraction=total<=0?0f:Math.max(0f,Math.min(1f,(float)completed/total));
+    canvas.drawRoundRect(new RectF(left,trackTop,left+(w-2*left)*fraction,trackTop+trackHeight),
+        trackHeight/2,trackHeight/2,paint);
+
     JSONArray items=day.optJSONArray("items");
-    int n=items==null?0:items.length();
-    float start=99f*scale, rowH=Math.max(20f,24f*scale);
-    int fit=Math.max(1,(int)((h-start-12f)/rowH));
-    int rows=Math.min(Math.min(preferredRows,fit),n);
-    tp.setColor(fg);tp.setTypeface(regular);tp.setTextSize(Math.max(12f,15f*scale));
+    tp.setColor(fg);tp.setTypeface(regular);
+    tp.setTextSize(17f*scale*sp);
+    float first=119*dp;
+    float rowHeight=Math.max(34*dp,tp.getFontSpacing()*1.17f);
+    int maxFit=Math.max(0,(int)Math.floor((h-first-9*dp)/rowHeight)+1);
+    int allowed=Math.min(preferredRows,maxFit);
     int shown=0;
-    for(int i=0;i<n&&shown<rows;i++){
-      JSONObject task=items.optJSONObject(i);if(task==null)continue;
-      if(!includePrayer&&task.optBoolean("prayer",false))continue;
-      String status=task.optBoolean("done",false)?"✓":"○";
-      String title=task.optString("title","مهمة");
+    int n=items==null?0:items.length();
+    for(int i=0;i<n&&shown<allowed;i++){
+      JSONObject task=items.optJSONObject(i);
+      if(task==null || (!includePrayer&&task.optBoolean("prayer",false)))continue;
+      String mark=task.optBoolean("done",false)?"✓":"○";
+      String title=task.optString("title","مهمة").replace('\n',' ').replace('\r',' ');
       String time=task.optString("time","");
-      String line=status+"  "+time+"  "+title;
-      String clipped=TextUtils.ellipsize(line,tp,w-2*inset,TextUtils.TruncateAt.END).toString();
-      canvas.drawText(clipped,right,start+shown*rowH,tp);
+      String line=mark+"  "+time+"  "+title;
+      canvas.drawText(trimmed(line,tp,w-2*left),right,first+shown*rowHeight,tp);
       shown++;
     }
-    if(shown==0){canvas.drawText("لا توجد أعمال مسجلة لهذا اليوم",right,start,tp);}
+    if(shown==0&&allowed>0){
+      tp.setTextSize(14*scale*sp);
+      canvas.drawText("لا توجد أعمال مسجلة لهذا اليوم",right,first,tp);
+    }
     return bitmap;
   }
 }
