@@ -46,7 +46,8 @@ function blocking(date){let ev=[],day=parseDay(date).getDay(),s=db.settings;
 const intersect=(ev,a,b)=>ev.find(x=>a<x.end&&x.start<b);
 function freeTime(busy,from,to,len){for(let a=from;a+len<=to;a+=5)if(!intersect(busy,a,a+len))return a;return null}
 function daily(date=selected){let ev=blocking(date),occupied=ev.slice(),untimed=[],waiting=[];
- const day=parseDay(date).getDay(),oncall=db.oncalls.some(c=>c.date===date);
+ const day=parseDay(date).getDay(),oncall=db.oncalls.some(c=>c.date===date),
+       prayerReady=SALAH.every(([id])=>minutes(db.prayers[date]?.times?.[id])!==null);
  for(const t of openTasks().filter(t=>t.date===date)){let a=minutes(t.time),len=Math.min(240,Math.max(5,Number(t.duration)||25));
   if(a===null){untimed.push(t);continue}
   let r={id:'task:'+t.id,title:t.title,start:a,end:Math.min(1440,a+len),kind:'task',ref:t.id,check:true};
@@ -59,6 +60,7 @@ function daily(date=selected){let ev=blocking(date),occupied=ev.slice(),untimed=
    ev.push(item);occupied.push(item);
  }
  for(const r of routines){if(db.overrides[date]?.[r.id])continue;
+   if(!prayerReady){waiting.push(r);continue}
    if(oncall&&r.id!=='r-quran'){waiting.push(r);continue}
    let len=Math.max(5,Math.min(240,+r.duration||25)),start=minutes(r.from)??500,end=minutes(r.to)??1350,last=minutes(db.settings.lastHour)??1350;
    const a=freeTime(occupied,start,Math.min(end,last),len);
@@ -103,7 +105,7 @@ function taskCompact(t){return `<div class="task"><strong>${esc(t.title)}</stron
 function renderHome(){
  let result=daily(),list=openTasks(),inbox=list.filter(t=>!t.date),total=result.events.filter(e=>e.check).length,done=result.events.filter(e=>e.check&&isDone(e)).length;
  $('dateHeading').textContent=longDate(selected);$('dayPicker').value=selected;
- $('daySummary').textContent=result.oncall?'🩺 يوم مناوبة؛ تخفف الأنشطة الاختيارية':'الصلاة والدوام محجوزان؛ باقي الأعمال قابلة للتعديل';
+ $('daySummary').textContent=!SALAH.every(([id])=>minutes(db.prayers[selected]?.times?.[id])!==null)?'⚠️ أكمل مواقيت الصلاة أولًا كي لا تتداخل الأنشطة معها':result.oncall?'🩺 يوم مناوبة؛ تخفف الأنشطة الاختيارية':'الصلاة والدوام محجوزان؛ باقي الأعمال قابلة للتعديل';
  $('countActive').textContent=num(total-done);$('countCompleted').textContent=num(done);$('countInbox').textContent=num(inbox.length);
  $('prayerStrip').innerHTML=SALAH.map(([k,n])=>`<span class="pill">${n}: ${db.prayers[selected]?.times?.[k]||'—'}</span>`).join('');
  $('daySchedule').innerHTML=result.events.map(renderTimelineEvent).join('')||'<p class="note">لا توجد مواعيد لهذا اليوم بعد.</p>';
