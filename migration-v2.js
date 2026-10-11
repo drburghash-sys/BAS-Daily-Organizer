@@ -103,7 +103,10 @@ function syncNativeWidget(){
    for(const x of d.untimed)items.push({title:x.title,time:'',done:false,unscheduled:true,check:true});
    for(const x of openTasks().filter(t=>t.date&&t.date<date).slice(0,16))items.push({title:x.title,time:'',done:false,unscheduled:true,check:true});
    for(const x of d.waiting)items.push({title:x.title,time:'',done:false,unscheduled:true,check:false});
-   return {date,label:longDate(date),total:count,done,items};
+   const carCare=typeof dueCare==='function'?dueCare(date):[];
+   for(const x of carCare)items.push({title:'🚘 '+x.car.name+' · '+x.item.name,time:'',
+       done:false,unscheduled:true,check:true,prayer:false});
+   return {date,label:longDate(date),total:count+carCare.length,done,items};
   });
   window.Android.syncWidgetData(JSON.stringify({schema:2,days}));
  }catch(err){console.warn('Widget sync skipped',err)}
