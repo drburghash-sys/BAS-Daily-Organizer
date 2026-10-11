@@ -67,7 +67,15 @@ public class MainActivity extends Activity {
         return true;
       }
     });
-    web.loadUrl("https://"+ORIGIN+"/assets/index.html");
+    String start="capture".equals(getIntent().getStringExtra("start_page"))?"#capture":"";
+    web.loadUrl("https://"+ORIGIN+"/assets/index.html"+start);
+  }
+  @Override protected void onNewIntent(Intent intent){
+    super.onNewIntent(intent);
+    setIntent(intent);
+    if(web!=null&&"capture".equals(intent.getStringExtra("start_page"))){
+      web.post(()->web.evaluateJavascript("if(typeof go==='function')go('capture')",null));
+    }
   }
   private boolean openExternal(Uri uri){
     String scheme=uri.getScheme();
