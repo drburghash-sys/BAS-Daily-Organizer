@@ -65,6 +65,12 @@ public class BasWidgetProvider extends AppWidgetProvider {
     PendingIntent click=PendingIntent.getActivity(context,widgetId,launch,
         PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
     views.setOnClickPendingIntent(R.id.widget_image,click);
+    Intent collection=new Intent(context,BasWidgetListService.class);
+    collection.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId);
+    collection.setData(android.net.Uri.parse("baswidget://tasks/"+widgetId));
+    views.setRemoteAdapter(R.id.widget_list,collection);
+    views.setEmptyView(R.id.widget_list,R.id.widget_empty);
+    views.setPendingIntentTemplate(R.id.widget_list,click);
     Intent settings=new Intent(context,WidgetConfigActivity.class);
     settings.setAction("sa.bas.daily.WIDGET_SETTINGS_"+widgetId);
     settings.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId);
@@ -74,8 +80,9 @@ public class BasWidgetProvider extends AppWidgetProvider {
     views.setContentDescription(R.id.widget_image,"BAS منظم يومي: اضغط لعرض الجدول والمهام");
     views.setContentDescription(R.id.widget_settings,"فتح إعدادات هذا الويجت");
     manager.updateAppWidget(widgetId,views);
+    manager.notifyAppWidgetViewDataChanged(widgetId,R.id.widget_list);
   }
-  private static int parseColor(SharedPreferences prefs,String key,int fallback){
+  static int parseColor(SharedPreferences prefs,String key,int fallback){
     try {return Color.parseColor(prefs.getString(key,String.format(Locale.US,"#%06X",fallback&0xFFFFFF)));}
     catch(Exception e){return fallback;}
   }
@@ -157,29 +164,8 @@ public class BasWidgetProvider extends AppWidgetProvider {
     canvas.drawRoundRect(new RectF(left,trackTop,left+(w-2*left)*fraction,trackTop+trackHeight),
         trackHeight/2,trackHeight/2,paint);
 
-    JSONArray items=day.optJSONArray("items");
-    tp.setColor(fg);tp.setTypeface(regular);
-    tp.setTextSize(17f*scale*sp);
-    float first=119*dp;
-    float rowHeight=Math.max(34*dp,tp.getFontSpacing()*1.17f);
-    int maxFit=Math.max(0,(int)Math.floor((h-first-9*dp)/rowHeight)+1);
-    int allowed=Math.min(preferredRows,maxFit);
-    int shown=0;
-    int n=items==null?0:items.length();
-    for(int i=0;i<n&&shown<allowed;i++){
-      JSONObject task=items.optJSONObject(i);
-      if(task==null || (!includePrayer&&task.optBoolean("prayer",false)))continue;
-      String mark=task.optBoolean("done",false)?"✓":"○";
-      String title=task.optString("title","مهمة").replace('\n',' ').replace('\r',' ');
-      String time=task.optString("time","");
-      String line=mark+"  "+time+"  "+title;
-      canvas.drawText(trimmed(line,tp,w-2*left),right,first+shown*rowHeight,tp);
-      shown++;
-    }
-    if(shown==0&&allowed>0){
-      tp.setTextSize(14*scale*sp);
-      canvas.drawText("لا توجد أعمال مسجلة لهذا اليوم",right,first,tp);
-    }
+    // The background and progress bar are drawn once. Every task is rendered
+    // by a native, vertically scrollable RemoteViews collection (no row limit).
     return bitmap;
   }
 }
