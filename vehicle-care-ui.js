@@ -37,18 +37,18 @@ function carCareView(car){
       <span class="pill" style="color:#f0d19a">قادم قريبًا: ${num(stats.soon)}</span>
       <span class="pill">سجل التنفيذ: ${num(history.length)}</span>
     </div>
-    <details class="careDetails"><summary>🔧 صيانة السيارة والتحضير للفحص</summary>
+    <details class="careDetails" data-care-key="${esc(car.id)}:care"><summary>🔧 صيانة السيارة والتحضير للفحص</summary>
       <p class="note" style="margin-top:10px">تظهر المواعيد تلقائيًا حسب العداد أو التاريخ عند توفر آخر صيانة أو موعد قادم. الفترات المبدئية من تطبيق الصيانة القديم، ويجب ضبطها حسب دليل سيارتك.</p>
       <div class="controls"><button class="btn gold tiny" onclick="editCarePlan('${carActionId(car.id)}','')">＋ بند صيانة مخصص</button>
       <button class="btn tiny" onclick="addVehicleService('${carActionId(car.id)}')">＋ تسجيل صيانة حرة</button></div>
       ${categories.map(cat=>{
         const rows=active.filter(x=>x.category===cat),due=rows.filter(x=>serviceStatus(car,x).state==='due').length;
-        return `<details class="careCategory"><summary>${esc(cat)} · ${num(rows.length)} بند ${due?'· مطلوب '+num(due):''}</summary>
+        return `<details class="careCategory" data-care-key="${esc(car.id)}:${esc(cat)}"><summary>${esc(cat)} · ${num(rows.length)} بند ${due?'· مطلوب '+num(due):''}</summary>
           ${rows.map(it=>careRow(car,it)).join('')}</details>`;
       }).join('')}
       ${carPlan(car).some(it=>it.disabled)?'<button class="btn tiny" onclick="showDisabledCare(\''+carActionId(car.id)+'\')">إظهار البنود المعطلة</button>':''}
     </details>
-    <details class="careHistory"><summary>📋 سجل الصيانة المنفذة (${num(history.length)})</summary>
+    <details class="careHistory" data-care-key="${esc(car.id)}:history"><summary>📋 سجل الصيانة المنفذة (${num(history.length)})</summary>
       ${history.length?history.map(s=>`<div class="entry">
         <strong>${esc(s.type||'صيانة')}</strong>
         <small class="small">${esc(s.date||'دون تاريخ')} · ${s.km===null||s.km===undefined?'عداد غير محدد':num(s.km)+' كم'} · ${num(s.cost||0)} ر.س</small>
@@ -63,7 +63,9 @@ const previousRenderRecords=renderRecords;
 renderRecords=function(){
  if(recordSection!=='vehicles')return previousRenderRecords();
  $('newRecordButton').textContent='＋ إضافة سيارة';
+ const openKeys=new Set([...document.querySelectorAll('#recordRows details[open]')].map(x=>x.dataset.careKey).filter(Boolean));
  $('recordRows').innerHTML=db.vehicles.length?db.vehicles.map(carCareView).join(''):'<p class="note">لا توجد سيارات، أضف أول سيارة.</p>';
+ for(const x of document.querySelectorAll('#recordRows details[data-care-key]'))if(openKeys.has(x.dataset.careKey))x.open=true;
 };
 function renderCareHome(){
  const node=$('maintenanceHome');if(!node)return;
