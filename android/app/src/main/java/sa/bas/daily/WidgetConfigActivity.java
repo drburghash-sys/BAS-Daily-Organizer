@@ -60,9 +60,16 @@ public class WidgetConfigActivity extends Activity {
     String savedFont=p.getString("font"+suffix,"sans-serif");
     for(int i=0;i<families.length;i++)if(savedFont.equals(families[i]))font.setSelection(i);
 
-    labelInto(col,"حجم الخط");
-    size=new SeekBar(this);size.setMax(60);size.setProgress(Math.max(0,Math.min(60,p.getInt("size"+suffix,100)-75)));
+    labelInto(col,"حجم الخط (من ٧٠٪ إلى ١٨٠٪)");
+    size=new SeekBar(this);size.setMax(110);size.setProgress(Math.max(0,Math.min(110,p.getInt("size"+suffix,110)-70)));
     col.addView(size);
+    TextView sizeLabel=label("حجم الخط الحالي: "+(size.getProgress()+70)+"٪",14);
+    col.addView(sizeLabel);
+    size.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+      @Override public void onProgressChanged(SeekBar bar,int progress,boolean fromUser){sizeLabel.setText("حجم الخط الحالي: "+(progress+70)+"٪");}
+      @Override public void onStartTrackingTouch(SeekBar bar){}
+      @Override public void onStopTrackingTouch(SeekBar bar){}
+    });
     labelInto(col,"شفافية الخلفية");
     opacity=new SeekBar(this);opacity.setMax(235);opacity.setProgress(Math.max(0,Math.min(235,p.getInt("alpha"+suffix,225)-20)));
     col.addView(opacity);
@@ -79,11 +86,12 @@ public class WidgetConfigActivity extends Activity {
 
     preview=new ImageView(this);
     preview.setAdjustViewBounds(true);
-    preview.setImageBitmap(BasWidgetProvider.render(this,widgetId,460,280));
+    float density=getResources().getDisplayMetrics().density;
+    preview.setImageBitmap(BasWidgetProvider.render(this,widgetId,Math.round(345*density),Math.round(215*density)));
     LinearLayout.LayoutParams imgParam=new LinearLayout.LayoutParams(-1,270);imgParam.topMargin=16;
     col.addView(preview,imgParam);
 
-    Button save=new Button(this);save.setText("حفظ وإضافة الويجت");
+    Button save=new Button(this);save.setText("حفظ إعدادات الويجت");
     save.setAllCaps(false);
     save.setOnClickListener(v->save());
     col.addView(save);
@@ -123,7 +131,7 @@ public class WidgetConfigActivity extends Activity {
       .putString("fg"+suffix,fgColor)
       .putString("accent"+suffix,accentColor)
       .putString("font"+suffix,families[font.getSelectedItemPosition()])
-      .putInt("size"+suffix,size.getProgress()+75)
+      .putInt("size"+suffix,size.getProgress()+70)
       .putInt("alpha"+suffix,opacity.getProgress()+20)
       .putInt("rows"+suffix,Integer.parseInt(rowValues[rows.getSelectedItemPosition()]))
       .putBoolean("prayer"+suffix,prayers.isChecked())
