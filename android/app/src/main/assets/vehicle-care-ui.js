@@ -32,6 +32,11 @@ function carCareView(car){
      <span class="pill">الفحص ${esc(car.inspection||'غير مسجل')}</span>
      <span class="pill">الاستمارة ${esc(car.registration||'غير مسجل')}</span></div>
     <div class="small">العداد: ${num(car.odometer||0)} كم</div>
+    <div class="controls" style="margin:12px 0">
+      <button class="btn gold" onclick="openVehicleRenewal('${carActionId(car.id)}','registration')">＋ تسجيل تجديد الاستمارة</button>
+      <button class="btn tiny" onclick="openVehicleRenewal('${carActionId(car.id)}','inspection')">تجديد الفحص</button>
+      <button class="btn tiny" onclick="openVehicleRenewal('${carActionId(car.id)}','insurance')">تجديد التأمين</button>
+    </div>
     <div class="tagbar">
       <span class="pill" style="color:#ffb0ad">مطلوب: ${num(stats.due)}</span>
       <span class="pill" style="color:#f0d19a">قادم قريبًا: ${num(stats.soon)}</span>
@@ -56,7 +61,10 @@ function carCareView(car){
         <button class="btn tiny danger" onclick="deleteVehicleService('${carActionId(car.id)}','${carActionId(s.id)}')">حذف السجل</button>
       </div>`).join(''):'<p class="note">لم تُسجل صيانة لهذه السيارة بعد.</p>'}
     </details>
-    <div class="controls"><button class="btn tiny" onclick="showVehicleHistory('${carActionId(car.id)}')">سجل تجديد الوثائق</button></div>
+    <details class="careHistory" data-care-key="${esc(car.id)}:renewal">
+      <summary>📋 سجل تجديد الاستمارة والفحص والتأمين (${num((car.renewalHistory||[]).length)})</summary>
+      ${renewalHistoryMarkup(car)}
+    </details>
   </article>`;
 }
 const previousRenderRecords=renderRecords;
