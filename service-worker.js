@@ -1,5 +1,5 @@
-const CACHE='bas-unified-v2.1-car-20261011';
-const ASSETS=['./','./index.html','./core-v2.js','./tasks-v2.js','./records-v2.js','./vehicle-care-model.js','./vehicle-care-ui.js','./vehicle-care-actions.js','./migration-v2.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='bas-unified-v2.2-vehicle-renewal-20261013';
+const ASSETS=['./','./index.html','./core-v2.js','./tasks-v2.js','./records-v2.js','./vehicle-care-model.js','./vehicle-care-ui.js','./vehicle-care-actions.js','./vehicle-renewal.js','./migration-v2.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));self.skipWaiting();
 });
